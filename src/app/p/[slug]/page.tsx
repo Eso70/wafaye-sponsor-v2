@@ -1,4 +1,7 @@
 import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { PageViewTracker } from "@/components/PageViewTracker";
 import {
   FaArrowUpRightFromSquare,
   FaGlobe,
@@ -10,7 +13,6 @@ import {
 } from "react-icons/fa6";
 import { FaInstagram, FaSnapchatGhost } from "react-icons/fa";
 import type { IconType } from "react-icons";
-import { PageViewTracker } from "@/components/PageViewTracker";
 
 const PLATFORM_ICONS: Record<string, IconType> = {
   whatsapp: FaWhatsapp,
@@ -30,10 +32,12 @@ const buttonVariants = [
   "bg-[#f8faff] border-[#d3dcf2]",
 ];
 
-async function getOfficialPage() {
+async function getPageBySlug(slug: string) {
   const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   try {
-    const res = await fetch(`${base}/api/pages/official`, { next: { revalidate: 60 } });
+    const res = await fetch(`${base}/api/pages/${encodeURIComponent(slug)}`, {
+      next: { revalidate: 60 },
+    });
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -41,20 +45,33 @@ async function getOfficialPage() {
   }
 }
 
-export async function generateMetadata() {
-  const data = await getOfficialPage();
-  const title = data?.name ?? "Wafaye Sponsor";
-  const description = data?.description ?? "Connect with Wafaye Sponsor. WhatsApp, Telegram, Viber & more.";
-  const image = data?.image ?? "/images/Logo.jpg";
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const data = await getPageBySlug(slug);
+  if (!data) {
+    return { title: "Page Not Found" };
+  }
+
+  const title = data.name;
+  const description = data.description || `${data.name} - Contact links`;
+  const image = data.image || "/images/DefaultAvatar.png";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const canonicalUrl = `${baseUrl}/p/${data.slug}`;
   const imageUrl = image.startsWith("http") ? image : `${baseUrl}${image}`;
+  const isExpired = data.status === "expired";
 
   return {
     title,
     description,
+    robots: isExpired ? { index: false, follow: false } : { index: true, follow: true },
     openGraph: {
       title,
       description,
+      url: canonicalUrl,
       images: [{ url: imageUrl, width: 400, height: 400, alt: title }],
     },
     twitter: {
@@ -64,45 +81,42 @@ export async function generateMetadata() {
       images: [imageUrl],
     },
     alternates: {
-      canonical: baseUrl,
+      canonical: canonicalUrl,
     },
   };
 }
 
-export default async function Home() {
-  const data = await getOfficialPage();
-  const name = data?.name ?? "Wafaye Sponsor";
-  const description = data?.description ?? "بۆ پەیوەندی کردن, کلیک لەم لینکانەی خوارەوە بکە";
-  const image = data?.image ?? "/images/Logo.jpg";
-  const showFooter = data?.showFooter !== false;
-  const sponsorName = data?.sponsorName ?? "Wafaye Sponsor";
-  const sponsorPhone = data?.sponsorPhone;
-  const links = data?.links ?? [
-    { id: 0, label: "WhatsApp", href: "https://wa.me/9647509516125", color: "#25D366", platformId: "whatsapp" },
-    { id: 0, label: "Telegram", href: "https://t.me/waf_aye", color: "#229ED9", platformId: "telegram" },
-    { id: 0, label: "Viber", href: "viber://chat?number=+9647509516125", color: "#7360F2", platformId: "viber" },
-    { id: 0, label: "Phone Call", href: "tel:+9647509516125", color: "#1F5CE0", platformId: "phone" },
-  ];
+export default async function PageBySlug({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const data = await getPageBySlug(slug);
+  if (!data) notFound();
 
+  const { name, description, image, links, showFooter = true, sponsorName = "Wafaye Sponsor", sponsorPhone } = data;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const imageUrl = image.startsWith("http") ? image : `${baseUrl}${image}`;
+  const imageUrl = (image || "/images/DefaultAvatar.png").startsWith("http")
+    ? image
+    : `${baseUrl}${image || "/images/DefaultAvatar.png"}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
     name,
-    description,
+    description: description || name,
     image: imageUrl,
-    url: baseUrl,
-    sameAs: links
-      .filter((l) => l.href?.startsWith("http") && !l.href.includes("/api/r/"))
-      .map((l) => l.href)
+    url: `${baseUrl}/p/${data.slug}`,
+    sameAs: (links || [])
+      .filter((l: { href?: string }) => l.href?.startsWith("http") && !l.href?.includes("/api/r/"))
+      .map((l: { href: string }) => l.href)
       .slice(0, 5),
   };
 
   return (
     <main className="min-h-screen min-h-[100dvh] bg-[#ecf1f7] text-slate-900">
-      {data?.id ? <PageViewTracker pageId={data.id} /> : null}
+      <PageViewTracker pageId={data.id} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -118,13 +132,16 @@ export default async function Home() {
         </div>
 
         <div className="w-full max-w-md text-center">
-          <p className="mx-auto mb-4 inline-flex items-center rounded-full border border-[#a9bbee] bg-white/65 px-3 py-1 text-xs font-medium text-[#2048bf] backdrop-blur">
-            Official Sponsor Bio
-          </p>
+          <Link
+            href="/"
+            className="mx-auto mb-4 inline-flex items-center rounded-full border border-[#a9bbee] bg-white/65 px-3 py-1 text-xs font-medium text-[#2048bf] backdrop-blur transition hover:bg-white/90"
+          >
+            Wafaye Sponsor
+          </Link>
 
           <div className="mx-auto w-fit">
             <Image
-              src={image}
+              src={image || "/images/DefaultAvatar.png"}
               alt={name}
               width={120}
               height={120}
@@ -136,10 +153,12 @@ export default async function Home() {
           <h1 className="mt-5 text-[2rem] font-semibold tracking-tight text-[#08133f] sm:text-4xl">
             {name}
           </h1>
-          <p className="mt-2 text-base text-slate-600 sm:text-lg">{description}</p>
+          <p className="mt-2 text-base text-slate-600 sm:text-lg">
+            {description || "Connect with me."}
+          </p>
 
           <nav className="mt-8 space-y-3.5 text-left sm:space-y-4">
-            {links.map((link, index) => {
+            {(links || []).map((link: { platformId: string; label: string; href: string; color: string }, index: number) => {
               const Icon = PLATFORM_ICONS[link.platformId] ?? FaGlobe;
               return (
                 <a
@@ -152,7 +171,7 @@ export default async function Home() {
                   <span className="flex items-center gap-3">
                     <span
                       className="flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] sm:h-12 sm:w-12"
-                      style={{ backgroundColor: link.color }}
+                      style={{ backgroundColor: link.color || "#64748b" }}
                     >
                       <Icon className="text-lg sm:text-xl" />
                     </span>
@@ -179,7 +198,7 @@ export default async function Home() {
               </p>
               {sponsorPhone ? (
                 <a
-                  href={`https://wa.me/${sponsorPhone.replace(/\D/g, "")}`}
+                  href={`https://wa.me/${String(sponsorPhone).replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-3 inline-flex min-h-[50px] items-center justify-center rounded-full border border-[#1f5ce0]/55 bg-white/20 px-9 py-3 text-sm font-semibold text-[#10359d] shadow-[0_10px_26px_rgba(17,52,150,0.14)] backdrop-blur-md transition hover:-translate-y-0.5 hover:border-[#1f5ce0]/80 hover:bg-white/30"
@@ -187,12 +206,12 @@ export default async function Home() {
                   {sponsorName}
                 </a>
               ) : (
-                <a
+                <Link
                   href="/"
                   className="mt-3 inline-flex min-h-[50px] items-center justify-center rounded-full border border-[#1f5ce0]/55 bg-white/20 px-9 py-3 text-sm font-semibold text-[#10359d] shadow-[0_10px_26px_rgba(17,52,150,0.14)] backdrop-blur-md transition hover:-translate-y-0.5 hover:border-[#1f5ce0]/80 hover:bg-white/30"
                 >
                   {sponsorName}
-                </a>
+                </Link>
               )}
             </div>
           )}
