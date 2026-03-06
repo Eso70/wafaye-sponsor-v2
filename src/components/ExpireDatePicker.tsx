@@ -112,13 +112,6 @@ export function ExpireDatePicker({
     (_, i) => yearBlockStart + i
   );
 
-  useEffect(() => {
-    if (open) {
-      setPending(parseValue(value));
-      setViewYear(parseValue(value).year);
-      setViewMonth(parseValue(value).month);
-    }
-  }, [open, value]);
 
   const selectedDate = pending;
 
@@ -210,7 +203,16 @@ export function ExpireDatePicker({
       <label className="mb-1.5 block text-sm font-medium text-slate-700">{label}</label>
       <button
         type="button"
-        onClick={() => !disabled && setOpen((p) => !p)}
+        onClick={() => {
+          if (disabled) return;
+          if (!open) {
+            const p = parseValue(value);
+            setPending(p);
+            setViewYear(p.year);
+            setViewMonth(p.month);
+          }
+          setOpen((p) => !p);
+        }}
         disabled={disabled}
         className={`flex w-full items-center gap-3 rounded-full border px-4 py-2.5 text-left text-sm transition ${
           disabled

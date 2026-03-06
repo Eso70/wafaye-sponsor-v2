@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import {
   FaArrowUpRightFromSquare,
   FaGlobe,
@@ -22,6 +23,8 @@ const PLATFORM_ICONS: Record<string, IconType> = {
   snapchat: FaSnapchatGhost,
   custom: FaGlobe,
 };
+
+type LinkItem = { id?: number; label: string; href: string; color: string; platformId: string };
 
 const buttonVariants = [
   "bg-white border-[#d6def1]",
@@ -77,7 +80,7 @@ export default async function Home() {
   const showFooter = data?.showFooter !== false;
   const sponsorName = data?.sponsorName ?? "Wafaye Sponsor";
   const sponsorPhone = data?.sponsorPhone;
-  const links = data?.links ?? [
+  const links: LinkItem[] = data?.links ?? [
     { id: 0, label: "WhatsApp", href: "https://wa.me/9647509516125", color: "#25D366", platformId: "whatsapp" },
     { id: 0, label: "Telegram", href: "https://t.me/waf_aye", color: "#229ED9", platformId: "telegram" },
     { id: 0, label: "Viber", href: "viber://chat?number=+9647509516125", color: "#7360F2", platformId: "viber" },
@@ -187,12 +190,12 @@ export default async function Home() {
                   {sponsorName}
                 </a>
               ) : (
-                <a
+                <Link
                   href="/"
                   className="mt-3 inline-flex min-h-[50px] items-center justify-center rounded-full border border-[#1f5ce0]/55 bg-white/20 px-9 py-3 text-sm font-semibold text-[#10359d] shadow-[0_10px_26px_rgba(17,52,150,0.14)] backdrop-blur-md transition hover:-translate-y-0.5 hover:border-[#1f5ce0]/80 hover:bg-white/30"
                 >
                   {sponsorName}
-                </a>
+                </Link>
               )}
             </div>
           )}

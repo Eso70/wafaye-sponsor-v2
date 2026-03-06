@@ -546,8 +546,8 @@ export function AdminDashboardClient({ username }: { username: string }) {
   const [profileTab, setProfileTab] = useState<"password" | "username">("password");
   const [profileMessage, setProfileMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [linktreePages, setLinktreePages] = useState<LinktreePage[]>([]);
-  const [pagesLoading, setPagesLoading] = useState(true);
-  const [pagesError, setPagesError] = useState<string | null>(null);
+  const [_pagesLoading, setPagesLoading] = useState(true);
+  const [_pagesError, setPagesError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/pages")
@@ -1400,7 +1400,7 @@ function ViewAnalyticsModal({
   onClear: () => void;
 }) {
   const [refreshing, setRefreshing] = useState(false);
-  const [linkClicks, setLinkClicks] = useState<Array<{ platformId: string; clicks: number }>>([]);
+  const [linkClicks, setLinkClicks] = useState<Array<{ platformId: PlatformId; clicks: number }>>([]);
   const [fetchKey, setFetchKey] = useState(0);
 
   useEffect(() => {
@@ -1412,8 +1412,8 @@ function ViewAnalyticsModal({
         const data = (await res.json()) as { links?: Array<{ platformId: string; clicks: number }> };
         if (cancelled) return;
         const list = (data.links ?? [])
-          .filter((l) => l.clicks > 0)
-          .map((l) => ({ platformId: l.platformId, clicks: l.clicks }))
+          .filter((l) => l.clicks > 0 && l.platformId in PLATFORM_CONFIG)
+          .map((l) => ({ platformId: l.platformId as PlatformId, clicks: l.clicks }))
           .sort((a, b) => b.clicks - a.clicks);
         setLinkClicks(list);
       } catch {
@@ -1532,7 +1532,8 @@ function ViewAnalyticsModal({
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 {platformClicks.map(({ platformId, clicks }) => {
-                  const cfg = PLATFORM_CONFIG[platformId];
+                  const cfg = PLATFORM_CONFIG[platformId as PlatformId];
+                  if (!cfg) return null;
                   const Icon = cfg.icon;
                   const pct = page.clicks > 0 ? ((clicks / page.clicks) * 100).toFixed(0) : "0";
                   return (
@@ -1753,7 +1754,7 @@ function CreateLinktreeModal({
       });
       const data = (await res.json().catch(() => null)) as LinktreePage | { error?: string };
       if (!res.ok) {
-        setCreateError(typeof data === "object" && data && "error" in data ? data.error : "Failed to create page");
+        setCreateError(typeof data === "object" && data && "error" in data ? (data.error ?? "Failed to create page") : "Failed to create page");
         return;
       }
       onSubmit(data as LinktreePage);
@@ -2261,7 +2262,7 @@ function EditLinktreeModal({
         const labels: Record<string, string> = {};
         const msgs: Record<string, string> = {};
 
-        links.forEach((link, i) => {
+        links.forEach((link) => {
           const id = nextInstanceIdRef.current++;
           instances.push({ id, platformId: link.platformId as PlatformId });
           const raw = link.value || "";
@@ -2285,6 +2286,7 @@ function EditLinktreeModal({
       }
     })();
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- DEFAULT_MESSAGE_PLATFORMS, IRAQ_PHONE_PLATFORMS are stable
   }, [page.id]);
 
   function addPlatformInstance(platformId: PlatformId) {
@@ -2391,7 +2393,7 @@ function EditLinktreeModal({
       });
       const data = (await res.json().catch(() => null)) as LinktreePage | { error?: string };
       if (!res.ok) {
-        setSaveError(typeof data === "object" && data && "error" in data ? data.error : "Failed to update page");
+        setSaveError(typeof data === "object" && data && "error" in data ? (data.error ?? "Failed to update page") : "Failed to update page");
         return;
       }
       onSuccess(data as LinktreePage);
