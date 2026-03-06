@@ -6,9 +6,9 @@
     "admin:hash": "node scripts/generate-admin-hash.mjs",
     "db": "node --env-file=.env scripts/seed-linktree.mjs && node --env-file=.env scripts/setup-admin.mjs",
     "seed": "npm run db",
-    "dev": "next dev",
+    "dev": "next dev -p 3010",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3010",
     "lint": "eslint"
   },
   "dependencies": {
