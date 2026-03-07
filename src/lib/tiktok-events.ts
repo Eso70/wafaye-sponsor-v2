@@ -1,8 +1,6 @@
 /**
  * TikTok Events API - Server-side event tracking
- * Sends ViewContent (page views) and ClickButton (link clicks) to TikTok
- * for improved attribution and ad optimization.
- * @see https://business-api.tiktok.com/portal/docs
+ * Sends ViewContent (page views) and ClickButton (link clicks) to TikTok.
  */
 
 const TIKTOK_EVENTS_API_URL = "https://business-api.tiktok.com/open_api/v1.3/event/track/";
@@ -15,14 +13,16 @@ export type TikTokEventContext = {
   referrer?: string;
 };
 
+type EventProperties = {
+  contentId: string;
+  contentType: string;
+  contentName: string;
+};
+
 async function sendTikTokEvent(
   eventType: "ViewContent" | "ClickButton",
   context: TikTokEventContext,
-  properties: {
-    contentId: string;
-    contentType: string;
-    contentName: string;
-  }
+  properties?: EventProperties
 ): Promise<void> {
   const pixelId = process.env.TIKTOK_PIXEL_ID;
   const accessToken = process.env.TIKTOK_EVENT_API_ACCESS_TOKEN;
@@ -33,33 +33,36 @@ async function sendTikTokEvent(
   const eventTime = Math.floor(Date.now() / 1000);
 
   const testEventCode = process.env.TIKTOK_TEST_EVENT_CODE?.trim();
+
+  const eventData: Record<string, unknown> = {
+    event: eventType,
+    event_time: eventTime,
+    event_id: eventId,
+    user: {
+      ip: context.ip,
+      user_agent: context.userAgent,
+      external_id: context.externalId,
+    },
+    page: {
+      url: context.pageUrl,
+      referrer: context.referrer || context.pageUrl,
+    },
+  };
+
+  // Only add properties for ViewContent; omit for ClickButton to avoid "Purchase value invalid" warning
+  if (properties && eventType === "ViewContent") {
+    eventData.properties = {
+      content_id: properties.contentId,
+      content_type: properties.contentType,
+      content_name: properties.contentName,
+    };
+  }
+
   const payload: Record<string, unknown> = {
     event_source: "web",
     event_source_id: pixelId,
     ...(testEventCode && { test_event_code: testEventCode }),
-    data: [
-      {
-        event: eventType,
-        event_time: eventTime,
-        event_id: eventId,
-        user: {
-          ip: context.ip,
-          user_agent: context.userAgent,
-          external_id: context.externalId,
-        },
-        page: {
-          url: context.pageUrl,
-          referrer: context.referrer || context.pageUrl,
-        },
-        properties: {
-          content_id: properties.contentId,
-          content_type: properties.contentType,
-          content_name: properties.contentName,
-          currency: "USD",
-          value: 0,
-        },
-      },
-    ],
+    data: [eventData],
   };
 
   try {
@@ -94,13 +97,9 @@ export async function sendViewContentEvent(
 }
 
 export async function sendClickButtonEvent(
-  linkId: number,
-  platformId: string,
+  _linkId: number,
+  _platformId: string,
   context: TikTokEventContext
 ): Promise<void> {
-  await sendTikTokEvent("ClickButton", context, {
-    contentId: String(linkId),
-    contentType: "link",
-    contentName: platformId || `Link ${linkId}`,
-  });
+  await sendTikTokEvent("ClickButton", context);
 }
