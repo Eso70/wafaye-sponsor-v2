@@ -4,6 +4,7 @@ import { verifySessionToken } from "@/lib/auth";
 import { db } from "@/database/db";
 import { getAppUrl } from "@/lib/app-url";
 import { computePageStatus, normalizeIraqPhone } from "@/lib/linktree";
+import { deleteUploadIfExists } from "@/lib/upload-utils";
 
 export const runtime = "nodejs";
 
@@ -130,13 +131,15 @@ export async function PATCH(
 
   try {
     const check = await db.query(
-      "SELECT id, slug, is_official FROM linktree_pages WHERE id = $1",
+      "SELECT id, slug, is_official, profile_image FROM linktree_pages WHERE id = $1",
       [pageId]
     );
     const existing = check.rows[0];
     if (!existing) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
+    const oldProfileImage = (existing.profile_image as string) || "";
+
     await db.query("BEGIN");
 
     if (existing.is_official) {
@@ -181,6 +184,10 @@ export async function PATCH(
     }
 
     await db.query("COMMIT");
+
+    if (oldProfileImage !== profileImage && oldProfileImage.startsWith("/uploads/")) {
+      await deleteUploadIfExists(oldProfileImage);
+    }
 
     const pageRes = await db.query(
       `SELECT p.id, p.name, p.description, p.profile_image, p.slug, p.expires_at, p.is_official, p.updated_at,
@@ -228,7 +235,7 @@ export async function DELETE(
 
   try {
     const check = await db.query(
-      "SELECT is_official FROM linktree_pages WHERE id = $1",
+      "SELECT is_official, profile_image FROM linktree_pages WHERE id = $1",
       [pageId]
     );
     const page = check.rows[0];
@@ -240,6 +247,11 @@ export async function DELETE(
         { error: "The official linktree cannot be deleted" },
         { status: 403 }
       );
+    }
+
+    const profileImage = page.profile_image as string;
+    if (profileImage.startsWith("/uploads/")) {
+      await deleteUploadIfExists(profileImage);
     }
 
     await db.query("DELETE FROM linktree_pages WHERE id = $1", [pageId]);

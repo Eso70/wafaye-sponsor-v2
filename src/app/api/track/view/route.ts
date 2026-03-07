@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { db } from "@/database/db";
-import { getAppUrl } from "@/lib/app-url";
-import { sendViewContentEvent } from "@/lib/tiktok-events";
 
 export const runtime = "nodejs";
 
@@ -45,28 +43,6 @@ export async function POST(request: NextRequest) {
     console.error("Track view error:", err);
     return NextResponse.json({ error: "Failed to record view" }, { status: 500 });
   }
-
-  const baseUrl = getAppUrl();
-  const pageUrl = request.headers.get("referer") || `${baseUrl}/`;
-  const forwarded = request.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() ?? "unknown";
-  const ua = request.headers.get("user-agent") ?? "unknown";
-
-  let pageSlug = "";
-  try {
-    const row = await db.query(`SELECT slug FROM linktree_pages WHERE id = $1`, [pageId]);
-    pageSlug = (row.rows[0]?.slug as string) || "";
-  } catch {
-    /* ignore */
-  }
-
-  sendViewContentEvent(pageId, pageSlug, {
-    ip,
-    userAgent: ua,
-    externalId: fingerprint,
-    pageUrl,
-    referrer: request.headers.get("referer") || undefined,
-  }).catch(() => {});
 
   const res = NextResponse.json({ ok: true });
   if (!(await cookies()).get(COOKIE_NAME)) {

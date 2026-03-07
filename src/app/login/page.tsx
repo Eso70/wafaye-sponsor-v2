@@ -52,7 +52,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-[#ecf1f7] text-slate-900">
       <section className="grid min-h-screen w-full lg:grid-cols-[1.05fr_0.95fr]">
-        <aside className="relative flex items-center justify-center overflow-hidden bg-[linear-gradient(155deg,#080f38_0%,#0e1d5a_45%,#102b84_100%)] px-8 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-18">
+        <aside className="relative hidden items-center justify-center overflow-hidden bg-[linear-gradient(155deg,#080f38_0%,#0e1d5a_45%,#102b84_100%)] px-8 py-10 sm:px-12 sm:py-14 lg:flex lg:px-16 lg:py-18">
           <div className="pointer-events-none absolute -left-24 -bottom-24 h-72 w-72 rounded-full bg-[#0a1f6a]/55" />
           <div className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-[#67f0ec]/15" />
 
@@ -84,6 +84,16 @@ export default function LoginPage() {
 
         <div className="flex items-center justify-center px-6 py-12 sm:px-10 lg:px-14">
           <div className="w-full max-w-md">
+            <div className="mb-6 flex justify-center lg:hidden">
+              <Image
+                src="/images/Logo.jpg"
+                alt="Wafaye Sponsor"
+                width={80}
+                height={80}
+                className="h-20 w-20 rounded-full border border-[#1f5ce0]/20 object-cover shadow-md"
+                priority
+              />
+            </div>
             <div className="mb-8 text-center">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1f5ce0]">
                 TikTok Sponsor

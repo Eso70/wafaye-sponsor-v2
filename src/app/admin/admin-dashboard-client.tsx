@@ -236,10 +236,24 @@ function formatDate(dateText: string): string {
 }
 
 function statusClass(status: LinktreePage["status"], isOfficial?: boolean): string {
-  if (isOfficial) return "bg-[#e8efff] text-[#1a43b6] border border-[#cfe0ff]";
-  if (status === "active") return "bg-[#e8efff] text-[#1a43b6] border border-[#cfe0ff]";
-  if (status === "expires_soon") return "bg-[#e2f7fb] text-[#0b6a86] border border-[#bfe9f3]";
+  if (isOfficial) return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+  if (status === "active") return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+  if (status === "expires_soon") return "bg-amber-100 text-amber-800 border border-amber-200";
   return "bg-rose-100 text-rose-700 border border-rose-200";
+}
+
+function cardClass(status: LinktreePage["status"], isOfficial?: boolean): string {
+  if (isOfficial) return "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 hover:border-emerald-300";
+  if (status === "active") return "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 hover:border-emerald-300";
+  if (status === "expires_soon") return "border-amber-200 bg-gradient-to-br from-amber-50/80 to-amber-100/50 hover:border-amber-300";
+  return "border-rose-200 bg-gradient-to-br from-rose-50/80 to-rose-100/50 hover:border-rose-300";
+}
+
+function rowClass(status: LinktreePage["status"], isOfficial?: boolean): string {
+  if (isOfficial) return "bg-emerald-50/70";
+  if (status === "active") return "bg-emerald-50/70";
+  if (status === "expires_soon") return "bg-amber-50/70";
+  return "bg-rose-50/70";
 }
 
 function statusLabel(status: LinktreePage["status"], isOfficial?: boolean): string {
@@ -270,6 +284,9 @@ const DEFAULT_SPONSOR_KEY = "wafaye_default_sponsor_name";
 function sortPages(items: LinktreePage[], sortBy: SortBy): LinktreePage[] {
   const next = [...items];
   next.sort((a, b) => {
+    if (a.isOfficial && !b.isOfficial) return -1;
+    if (!a.isOfficial && b.isOfficial) return 1;
+    if (a.isOfficial && b.isOfficial) return 0;
     if (sortBy === "name") return a.name.localeCompare(b.name);
     if (sortBy === "views") return b.views - a.views;
     if (sortBy === "clicks") return b.clicks - a.clicks;
@@ -655,6 +672,22 @@ export function AdminDashboardClient({ username }: { username: string }) {
   }).format(currentDateTime);
 
   useEffect(() => {
+    setActiveView("dashboard");
+  }, []);
+
+  useEffect(() => {
+    setActiveView("dashboard");
+  }, []);
+
+  useEffect(() => {
+    setActiveView("dashboard");
+  }, []);
+
+  useEffect(() => {
+    setActiveView("dashboard");
+  }, []);
+
+  useEffect(() => {
     if (!mobileSidebarOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -662,6 +695,10 @@ export function AdminDashboardClient({ username }: { username: string }) {
       document.body.style.overflow = previousOverflow;
     };
   }, [mobileSidebarOpen]);
+
+  useEffect(() => {
+    setActiveView("dashboard");
+  }, []);
 
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {
@@ -689,17 +726,18 @@ export function AdminDashboardClient({ username }: { username: string }) {
         <button
           aria-label="Close sidebar overlay"
           onClick={() => setMobileSidebarOpen(false)}
-          className="fixed inset-0 z-30 bg-slate-900/45 lg:hidden"
+          className="fixed inset-0 left-[min(320px,88vw)] z-[35] bg-slate-900/45 lg:hidden"
           type="button"
         />
       ) : null}
 
       <section className="relative z-10 flex w-full">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 flex w-[min(320px,88vw)] flex-col border-r border-[#dbe4fb]/80 bg-gradient-to-b from-[#fafbff] to-[#f5f8ff] p-4 shadow-[0_30px_70px_rgba(15,23,42,0.35)] transition-transform duration-300 lg:w-[280px] lg:translate-x-0 lg:shadow-none ${
+          className={`fixed inset-y-0 left-0 z-[45] flex w-[min(320px,88vw)] flex-col border-r border-[#dbe4fb]/80 bg-gradient-to-b from-[#fafbff] to-[#f5f8ff] shadow-[0_30px_70px_rgba(15,23,42,0.35)] transition-transform duration-300 lg:z-10 lg:w-[280px] lg:translate-x-0 lg:shadow-none ${
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
           <div className="pointer-events-none absolute -right-8 top-20 h-24 w-24 rounded-full bg-[#1f5ce0]/8 blur-2xl" />
           <div className="pointer-events-none absolute -left-4 bottom-32 h-20 w-20 rounded-full bg-[#14b8a6]/10 blur-2xl" />
           <div className="pointer-events-none absolute right-2 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full border border-[#d7e3ff]/40" />
@@ -758,7 +796,7 @@ export function AdminDashboardClient({ username }: { username: string }) {
                       setActiveView(item.id);
                       setMobileSidebarOpen(false);
                     }}
-                    className={`flex w-full items-center gap-3 rounded-full px-4 py-3 text-base font-medium transition-all ${
+                    className={`flex min-h-[48px] w-full touch-manipulation cursor-pointer items-center gap-3 rounded-full px-4 py-3 text-left text-base font-medium transition-all active:scale-[0.98] ${
                       isActive
                         ? isSettings
                           ? "border-2 border-[#bde7f3] bg-gradient-to-r from-[#e6f9ff] to-[#e0f7fc] text-[#0b6a86] shadow-sm"
@@ -797,6 +835,7 @@ export function AdminDashboardClient({ username }: { username: string }) {
               </span>
               {loggingOut ? "Logging out..." : "Logout"}
             </button>
+          </div>
           </div>
         </aside>
 
@@ -1070,13 +1109,7 @@ export function AdminDashboardClient({ username }: { username: string }) {
                     {filteredPages.map((page) => (
                       <article
                         key={page.id}
-                        className={`flex flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 shadow-[0_8px_32px_rgba(31,92,224,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_48px_rgba(31,92,224,0.15)] ${
-                          page.id % 3 === 1
-                            ? "border-[#d7e2ff] bg-gradient-to-br from-[#f8fbff] to-[#f0f7ff] hover:border-[#a9bff7]"
-                            : page.id % 3 === 2
-                              ? "border-[#cdebe3] bg-gradient-to-br from-[#f5fffb] to-[#ecfaf5] hover:border-[#9ad2c0]"
-                              : "border-[#f2d9e8] bg-gradient-to-br from-[#fff8fc] to-[#fef2f7] hover:border-[#e4b8d6]"
-                        }`}
+                        className={`flex flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 shadow-[0_8px_32px_rgba(31,92,224,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_48px_rgba(31,92,224,0.15)] ${cardClass(page.status, page.isOfficial)}`}
                       >
                         <div className="flex items-start gap-3">
                           <Image
@@ -1204,9 +1237,7 @@ export function AdminDashboardClient({ username }: { username: string }) {
                       {filteredPages.map((page) => (
                         <div
                           key={page.id}
-                          className={`grid gap-2 px-3 py-3 md:grid-cols-[1.2fr_0.55fr_0.45fr_0.45fr_0.8fr_0.65fr] md:items-center ${
-                            page.id % 2 === 0 ? "bg-[#f8fffb]" : "bg-[#f8faff]"
-                          }`}
+                          className={`grid gap-2 px-3 py-3 md:grid-cols-[1.2fr_0.55fr_0.45fr_0.45fr_0.8fr_0.65fr] md:items-center ${rowClass(page.status, page.isOfficial)}`}
                         >
                           <div className="min-w-0">
                             <p className="truncate text-base font-semibold text-slate-900">{page.name}</p>
@@ -1595,6 +1626,8 @@ function CreateLinktreeModal({
   const [linkValues, setLinkValues] = useState<Record<string, string>>({});
   const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
   const [defaultMessages, setDefaultMessages] = useState<Record<string, string>>({});
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadImageError, setUploadImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const DEFAULT_MESSAGE_PLATFORMS: PlatformId[] = ["whatsapp", "telegram", "viber"];
@@ -1688,12 +1721,30 @@ function CreateLinktreeModal({
     });
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setProfileImage(reader.result as string);
-      reader.readAsDataURL(file);
+    if (!file) return;
+    setUploadImageError(null);
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const data = (await res.json().catch(() => null)) as { path?: string; error?: string };
+      if (!res.ok) {
+        setUploadImageError(data?.error ?? "Upload failed");
+        return;
+      }
+      if (data?.path) setProfileImage(data.path);
+    } catch {
+      setUploadImageError("Upload failed. Please try again.");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
     }
   }
 
@@ -1710,7 +1761,7 @@ function CreateLinktreeModal({
     defaultExpiry.setDate(defaultExpiry.getDate() + 10);
     const expiry = expiresAt ? new Date(`${expiresAt}T00:00:00`) : defaultExpiry;
     const expiresAtStr = expiry.toISOString().slice(0, 10);
-    const profilePath = profileImage.startsWith("/") ? profileImage : "/images/DefaultAvatar.png";
+    const profilePath = profileImage || "/images/DefaultAvatar.png";
 
     const links = platformInstances
       .map((inst, i) => {
@@ -1844,14 +1895,35 @@ function CreateLinktreeModal({
                 <div className="pointer-events-none h-1 rounded-full bg-[linear-gradient(90deg,#d9e7ff_0%,#d9f6eb_100%)]" />
 
                 <div className="flex flex-col items-center gap-3 text-center">
-                  <button
-                    type="button"
-                    onClick={openFilePicker}
-                    className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-[#d7e2f8] bg-slate-100 transition hover:border-[#1f5ce0]"
-                    aria-label="Upload profile image"
-                  >
-                    <Image src={profileImage} alt="Profile preview" fill className="object-cover" />
-                  </button>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={openFilePicker}
+                      disabled={uploadingImage}
+                      className={`relative h-28 w-28 overflow-hidden rounded-full border-2 border-[#d7e2f8] bg-slate-100 transition hover:border-[#1f5ce0] ${uploadingImage ? "pointer-events-none opacity-70" : ""}`}
+                      aria-label="Upload profile image"
+                    >
+                      <Image src={profileImage} alt="Profile preview" fill className="object-cover" />
+                      {uploadingImage && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-slate-900/40">
+                          <FaArrowsRotate className="h-6 w-6 animate-spin text-white" />
+                        </span>
+                      )}
+                    </button>
+                    {profileImage !== "/images/DefaultAvatar.png" && !uploadingImage && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileImage("/images/DefaultAvatar.png");
+                          setUploadImageError(null);
+                        }}
+                        aria-label="Remove image and use default"
+                        className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-rose-500 text-white shadow-md transition hover:bg-rose-600"
+                      >
+                        <FaXmark className="text-xs" />
+                      </button>
+                    )}
+                  </div>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -1862,11 +1934,15 @@ function CreateLinktreeModal({
                   <button
                     type="button"
                     onClick={openFilePicker}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#1f5ce0] bg-[#1f5ce0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a4fc9]"
+                    disabled={uploadingImage}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#1f5ce0] bg-[#1f5ce0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a4fc9] disabled:opacity-60"
                   >
                     <FaImage className="text-xs" />
-                    Upload Image
+                    {uploadingImage ? "Uploading…" : "Upload Image"}
                   </button>
+                  {uploadImageError && (
+                    <p className="text-sm text-rose-600">{uploadImageError}</p>
+                  )}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -2225,6 +2301,8 @@ function EditLinktreeModal({
   const [linkValues, setLinkValues] = useState<Record<string, string>>({});
   const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
   const [defaultMessages, setDefaultMessages] = useState<Record<string, string>>({});
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadImageError, setUploadImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nextInstanceIdRef = useRef(1);
 
@@ -2337,12 +2415,30 @@ function EditLinktreeModal({
     });
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setProfileImage(reader.result as string);
-      reader.readAsDataURL(file);
+    if (!file) return;
+    setUploadImageError(null);
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const data = (await res.json().catch(() => null)) as { path?: string; error?: string };
+      if (!res.ok) {
+        setUploadImageError(data?.error ?? "Upload failed");
+        return;
+      }
+      if (data?.path) setProfileImage(data.path);
+    } catch {
+      setUploadImageError("Upload failed. Please try again.");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
     }
   }
 
@@ -2350,7 +2446,7 @@ function EditLinktreeModal({
   const [saveError, setSaveError] = useState<string | null>(null);
 
   async function savePage() {
-    const profilePath = profileImage.startsWith("/") ? profileImage : "/images/DefaultAvatar.png";
+    const profilePath = profileImage || "/images/DefaultAvatar.png";
     const links = platformInstances
       .map((inst, i) => {
         const val = linkValues[String(inst.id)]?.trim();
@@ -2488,14 +2584,29 @@ function EditLinktreeModal({
             {tab === 1 && (
               <div className="relative space-y-4 px-1 py-1">
                 <div className="flex flex-col items-center gap-3 text-center">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-[#d7e2f8] bg-slate-100 transition hover:border-[#1f5ce0]"
-                    aria-label="Upload profile image"
-                  >
-                    <Image src={profileImage} alt="Profile preview" fill className="object-cover" />
-                  </button>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-[#d7e2f8] bg-slate-100 transition hover:border-[#1f5ce0]"
+                      aria-label="Upload profile image"
+                    >
+                      <Image src={profileImage} alt="Profile preview" fill className="object-cover" />
+                    </button>
+                    {profileImage !== "/images/DefaultAvatar.png" && !uploadingImage && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileImage("/images/DefaultAvatar.png");
+                          setUploadImageError(null);
+                        }}
+                        aria-label="Remove image and use default"
+                        className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-rose-500 text-white shadow-md transition hover:bg-rose-600"
+                      >
+                        <FaXmark className="text-xs" />
+                      </button>
+                    )}
+                  </div>
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                   <button type="button" onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-full border border-[#1f5ce0] bg-[#1f5ce0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a4fc9]">
                     <FaImage className="text-xs" />
