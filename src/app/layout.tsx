@@ -9,7 +9,7 @@ const primaryFont = localFont({
 });
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const tiktokPixelId = process.env.TIKTOK_PIXEL_ID || "D59UO0JC77U9GK0PKDHG";
+const tiktokPixelId = process.env.TIKTOK_PIXEL_ID || "D6M52Q3C77U160FIC8M0";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
