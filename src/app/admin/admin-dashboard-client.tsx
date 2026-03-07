@@ -1631,6 +1631,7 @@ function CreateLinktreeModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const DEFAULT_MESSAGE_PLATFORMS: PlatformId[] = ["whatsapp", "telegram", "viber"];
+  const DEFAULT_MESSAGE_TEXT = "سڵاو بەڕێز.";
   const IRAQ_PHONE_PLATFORMS: PlatformId[] = ["whatsapp", "viber", "phone"];
   const nextInstanceIdRef = useRef(1);
 
@@ -1673,11 +1674,14 @@ function CreateLinktreeModal({
     );
   }
 
+  const DEFAULT_PREFILL_MESSAGE = "سڵاو بەڕێز.";
+
   function addPlatformInstance(platformId: PlatformId) {
-    setPlatformInstances((prev) => [
-      ...prev,
-      { id: nextInstanceIdRef.current++, platformId },
-    ]);
+    const newId = nextInstanceIdRef.current++;
+    setPlatformInstances((prev) => [...prev, { id: newId, platformId }]);
+    if (DEFAULT_MESSAGE_PLATFORMS.includes(platformId)) {
+      setDefaultMessages((prev) => ({ ...prev, [String(newId)]: DEFAULT_PREFILL_MESSAGE }));
+    }
   }
 
   function removePlatformInstance(instanceId: number, platformId: PlatformId) {

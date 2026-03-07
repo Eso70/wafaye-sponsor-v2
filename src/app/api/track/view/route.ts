@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { db } from "@/database/db";
+import { sendTiktokEvent } from "@/lib/tiktok-events";
 
 export const runtime = "nodejs";
 
@@ -33,15 +34,49 @@ export async function POST(request: NextRequest) {
   }
 
   const fingerprint = await getVisitorFingerprint(request);
+  let isNewView = false;
 
   try {
-    await db.query(
-      `INSERT INTO page_views (page_id, visitor_fingerprint) VALUES ($1, $2) ON CONFLICT (page_id, visitor_fingerprint) DO NOTHING`,
-      [pageId, fingerprint]
+    const insertRes = await db.query(
+      `INSERT INTO page_views (page_id, visitor_fingerprint)
+       VALUES ($1, $2)
+       ON CONFLICT (page_id, visitor_fingerprint) DO NOTHING
+       RETURNING 1`,
+      [pageId, fingerprint],
     );
+    isNewView = insertRes.rowCount > 0;
   } catch (err) {
     console.error("Track view error:", err);
     return NextResponse.json({ error: "Failed to record view" }, { status: 500 });
+  }
+
+  if (isNewView) {
+    try {
+      const pageRes = await db.query<{ name: string; description: string | null }>(
+        `SELECT name, description FROM linktree_pages WHERE id = $1 LIMIT 1`,
+        [pageId],
+      );
+      const page = pageRes.rows[0];
+      const pageName = page?.name || `Page ${pageId}`;
+      const pageDescription = page?.description || undefined;
+      const pageUrl =
+        request.headers.get("referer") ||
+        request.nextUrl.searchParams.get("url") ||
+        new URL("/", request.url).toString();
+
+      await sendTiktokEvent({
+        eventName: "ViewContent",
+        eventId: `view_${pageId}_${fingerprint}`,
+        request,
+        url: pageUrl,
+        contentId: String(pageId),
+        contentType: "page",
+        contentName: pageName,
+        description: pageDescription,
+      });
+    } catch (err) {
+      console.error("TikTok ViewContent send error:", err);
+    }
   }
 
   const res = NextResponse.json({ ok: true });

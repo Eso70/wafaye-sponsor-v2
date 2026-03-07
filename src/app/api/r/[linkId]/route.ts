@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { db } from "@/database/db";
 import { buildLinkHref } from "@/lib/linktree";
+import { sendTiktokEvent } from "@/lib/tiktok-events";
 
 export const runtime = "nodejs";
 
@@ -29,11 +30,22 @@ export async function GET(
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  let link: { platform_id: string; value: string; default_message: string | null } | null = null;
+  let link: {
+    id: number;
+    page_id: number;
+    platform_id: string;
+    value: string;
+    default_message: string | null;
+    page_name: string;
+  } | null = null;
   try {
     const res = await db.query(
-      `SELECT platform_id, value, default_message FROM linktree_links WHERE id = $1`,
-      [linkIdNum]
+      `SELECT l.id, l.page_id, l.platform_id, l.value, l.default_message, p.name AS page_name
+       FROM linktree_links l
+       JOIN linktree_pages p ON p.id = l.page_id
+       WHERE l.id = $1
+       LIMIT 1`,
+      [linkIdNum],
     );
     link = res.rows[0] ?? null;
   } catch (err) {
@@ -45,13 +57,39 @@ export async function GET(
   }
 
   const fingerprint = await getVisitorFingerprint(request);
+  let isNewClick = false;
   try {
-    await db.query(
-      `INSERT INTO link_clicks (link_id, visitor_fingerprint) VALUES ($1, $2) ON CONFLICT (link_id, visitor_fingerprint) DO NOTHING`,
-      [linkIdNum, fingerprint]
+    const insertRes = await db.query(
+      `INSERT INTO link_clicks (link_id, visitor_fingerprint)
+       VALUES ($1, $2)
+       ON CONFLICT (link_id, visitor_fingerprint) DO NOTHING
+       RETURNING 1`,
+      [linkIdNum, fingerprint],
     );
+    isNewClick = insertRes.rowCount > 0;
   } catch (err) {
     console.error("Track click error:", err);
+  }
+
+  if (isNewClick) {
+    try {
+      const pageUrl =
+        request.headers.get("referer") ||
+        new URL("/", request.url).toString();
+
+      await sendTiktokEvent({
+        eventName: "ClickButton",
+        eventId: `click_${linkIdNum}_${fingerprint}`,
+        request,
+        url: pageUrl,
+        contentId: String(link.id),
+        contentType: "button",
+        contentName: `${link.platform_id} button`,
+        description: link.page_name,
+      });
+    } catch (err) {
+      console.error("TikTok ClickButton send error:", err);
+    }
   }
 
   const href = buildLinkHref(link.platform_id, link.value, link.default_message);
