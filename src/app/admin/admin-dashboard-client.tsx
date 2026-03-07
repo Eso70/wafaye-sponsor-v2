@@ -1631,7 +1631,7 @@ function CreateLinktreeModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const DEFAULT_MESSAGE_PLATFORMS: PlatformId[] = ["whatsapp", "telegram", "viber"];
-  const DEFAULT_MESSAGE_TEXT = "سڵاو بەڕێز.";
+  const DEFAULT_PREFILL_MESSAGE = "سڵاو بەڕێز.";
   const IRAQ_PHONE_PLATFORMS: PlatformId[] = ["whatsapp", "viber", "phone"];
   const nextInstanceIdRef = useRef(1);
 
@@ -1673,8 +1673,6 @@ function CreateLinktreeModal({
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
   }
-
-  const DEFAULT_PREFILL_MESSAGE = "سڵاو بەڕێز.";
 
   function addPlatformInstance(platformId: PlatformId) {
     const newId = nextInstanceIdRef.current++;
@@ -1836,10 +1834,20 @@ function CreateLinktreeModal({
     setPlatformInstances((prev) => {
       const filtered = prev.filter((instance) => selectedPlatforms.includes(instance.platformId));
       const next = [...filtered];
+      const toPrefill: Array<{ id: number; platformId: PlatformId }> = [];
       for (const id of selectedPlatforms) {
         if (!next.some((instance) => instance.platformId === id)) {
-          next.push({ id: nextInstanceIdRef.current++, platformId: id });
+          const newId = nextInstanceIdRef.current++;
+          next.push({ id: newId, platformId: id });
+          if (DEFAULT_MESSAGE_PLATFORMS.includes(id)) toPrefill.push({ id: newId, platformId: id });
         }
+      }
+      if (toPrefill.length > 0) {
+        setDefaultMessages((prev) => {
+          const n = { ...prev };
+          for (const { id } of toPrefill) n[String(id)] = DEFAULT_PREFILL_MESSAGE;
+          return n;
+        });
       }
       return next;
     });
@@ -2311,6 +2319,7 @@ function EditLinktreeModal({
   const nextInstanceIdRef = useRef(1);
 
   const DEFAULT_MESSAGE_PLATFORMS: PlatformId[] = ["whatsapp", "telegram", "viber"];
+  const DEFAULT_PREFILL_MESSAGE = "سڵاو بەڕێز.";
   const IRAQ_PHONE_PLATFORMS: PlatformId[] = ["whatsapp", "viber", "phone"];
   const inputClass = "w-full rounded-full border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-[#1b49d0] focus:ring-2 focus:ring-[#c8d6ff]";
 
@@ -2372,7 +2381,11 @@ function EditLinktreeModal({
   }, [page.id]);
 
   function addPlatformInstance(platformId: PlatformId) {
-    setPlatformInstances((prev) => [...prev, { id: nextInstanceIdRef.current++, platformId }]);
+    const newId = nextInstanceIdRef.current++;
+    setPlatformInstances((prev) => [...prev, { id: newId, platformId }]);
+    if (DEFAULT_MESSAGE_PLATFORMS.includes(platformId)) {
+      setDefaultMessages((prev) => ({ ...prev, [String(newId)]: DEFAULT_PREFILL_MESSAGE }));
+    }
   }
 
   function removePlatformInstance(instanceId: number, platformId: PlatformId) {
@@ -2408,10 +2421,20 @@ function EditLinktreeModal({
       setPlatformInstances((insts) => {
         const filtered = insts.filter((i) => next.includes(i.platformId));
         const result = [...filtered];
+        const toPrefill: Array<{ id: number; platformId: PlatformId }> = [];
         for (const pid of next) {
           if (!result.some((i) => i.platformId === pid)) {
-            result.push({ id: nextInstanceIdRef.current++, platformId: pid });
+            const newId = nextInstanceIdRef.current++;
+            result.push({ id: newId, platformId: pid });
+            if (DEFAULT_MESSAGE_PLATFORMS.includes(pid)) toPrefill.push({ id: newId, platformId: pid });
           }
+        }
+        if (toPrefill.length > 0) {
+          setDefaultMessages((p) => {
+            const n = { ...p };
+            for (const { id } of toPrefill) n[String(id)] = DEFAULT_PREFILL_MESSAGE;
+            return n;
+          });
         }
         return result;
       });

@@ -12,6 +12,7 @@ const PHONE_PLATFORMS = ["whatsapp", "viber", "phone"];
 /**
  * Normalize Iraqi phone input: 07501234567 or 7501234567 -> 9647501234567
  * Backend adds 964 (Iraq), user enters only local part.
+ * Iraqi mobile numbers are 07XXXXXXXX (9 digits, must start with 7).
  */
 export function normalizeIraqPhone(value: string): string {
   const digits = value.replace(/\D/g, "");
@@ -20,6 +21,8 @@ export function normalizeIraqPhone(value: string): string {
   if (rest.startsWith("964")) rest = rest.slice(3);
   else if (rest.startsWith("0")) rest = rest.slice(1);
   if (rest.length === 9 && rest.startsWith("7")) return "964" + rest;
+  // 9 digits not starting with 7 (e.g. 509516125) - likely missing leading 7 from 7509516125
+  if (rest.length === 9 && !rest.startsWith("7")) rest = "7" + rest;
   if (rest.length >= 9) return "964" + rest.slice(-9);
   return "964" + rest;
 }
