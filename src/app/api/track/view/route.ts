@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
        RETURNING 1`,
       [pageId, fingerprint],
     );
-    isNewView = insertRes.rowCount > 0;
+    isNewView = (insertRes.rowCount ?? 0) > 0;
   } catch (err) {
     console.error("Track view error:", err);
     return NextResponse.json({ error: "Failed to record view" }, { status: 500 });

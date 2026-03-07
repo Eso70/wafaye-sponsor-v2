@@ -66,7 +66,7 @@ export async function GET(
        RETURNING 1`,
       [linkIdNum, fingerprint],
     );
-    isNewClick = insertRes.rowCount > 0;
+    isNewClick = (insertRes.rowCount ?? 0) > 0;
   } catch (err) {
     console.error("Track click error:", err);
   }
