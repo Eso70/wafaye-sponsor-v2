@@ -26,12 +26,12 @@ const OFFICIAL_PAGE = {
   is_official: true,
   show_footer: true,
   sponsor_name: "Wafaye Sponsor",
-  sponsor_phone: "9647509516125",
+  sponsor_phone: "9647506553031",
   links: [
-    { platform_id: "whatsapp", value: "9647509516125", default_message: null, sort_order: 0 },
+    { platform_id: "whatsapp", value: "9647506553031", default_message: null, sort_order: 0 },
     { platform_id: "telegram", value: "waf_aye", default_message: null, sort_order: 1 },
-    { platform_id: "viber", value: "9647509516125", default_message: null, sort_order: 2 },
-    { platform_id: "phone", value: "9647509516125", sort_order: 3 },
+    { platform_id: "viber", value: "9647506553031", default_message: null, sort_order: 2 },
+    { platform_id: "phone", value: "9647506553031", sort_order: 3 },
   ],
 };
 

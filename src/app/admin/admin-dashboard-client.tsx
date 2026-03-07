@@ -1619,7 +1619,7 @@ function CreateLinktreeModal({
     if (typeof window === "undefined") return "Wafaye Sponsor";
     return localStorage.getItem(DEFAULT_SPONSOR_KEY) || "Wafaye Sponsor";
   });
-  const [sponsorPhone, setSponsorPhone] = useState("+9647509516125");
+  const [sponsorPhone, setSponsorPhone] = useState("+9647506553031");
   const [hideFooter, setHideFooter] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformId[]>([]);
   const [platformInstances, setPlatformInstances] = useState<Array<{ id: number; platformId: PlatformId }>>([]);
@@ -2306,7 +2306,7 @@ function EditLinktreeModal({
     if (typeof window === "undefined") return "Wafaye Sponsor";
     return localStorage.getItem(DEFAULT_SPONSOR_KEY) || "Wafaye Sponsor";
   });
-  const [sponsorPhone, setSponsorPhone] = useState("+9647509516125");
+  const [sponsorPhone, setSponsorPhone] = useState("+9647506553031");
   const [hideFooter, setHideFooter] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformId[]>([]);
   const [platformInstances, setPlatformInstances] = useState<Array<{ id: number; platformId: PlatformId }>>([]);

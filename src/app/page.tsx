@@ -82,10 +82,10 @@ export default async function Home() {
   const sponsorName = data?.sponsorName ?? "Wafaye Sponsor";
   const sponsorPhone = data?.sponsorPhone;
   const links: LinkItem[] = data?.links ?? [
-    { id: 0, label: "WhatsApp", href: "https://wa.me/9647509516125", color: "#25D366", platformId: "whatsapp" },
+    { id: 0, label: "WhatsApp", href: "https://wa.me/9647506553031", color: "#25D366", platformId: "whatsapp" },
     { id: 0, label: "Telegram", href: "https://t.me/waf_aye", color: "#229ED9", platformId: "telegram" },
-    { id: 0, label: "Viber", href: "viber://chat?number=+9647509516125", color: "#7360F2", platformId: "viber" },
-    { id: 0, label: "Phone Call", href: "tel:+9647509516125", color: "#1F5CE0", platformId: "phone" },
+    { id: 0, label: "Viber", href: "viber://chat?number=+9647506553031", color: "#7360F2", platformId: "viber" },
+    { id: 0, label: "Phone Call", href: "tel:+9647506553031", color: "#1F5CE0", platformId: "phone" },
   ];
 
   const baseUrl = getAppUrl();
