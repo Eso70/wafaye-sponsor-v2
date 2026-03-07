@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { getAppUrl } from "@/lib/app-url";
 
 const primaryFont = localFont({
   src: "../../public/fonts/kurdishFont.woff",
@@ -8,7 +9,7 @@ const primaryFont = localFont({
   display: "swap",
 });
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const baseUrl = getAppUrl();
 const tiktokPixelId = process.env.TIKTOK_PIXEL_ID || "D6M52Q3C77U160FIC8M0";
 
 export const metadata: Metadata = {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { db } from "@/database/db";
+import { getAppUrl } from "@/lib/app-url";
 import { sendViewContentEvent } from "@/lib/tiktok-events";
 
 export const runtime = "nodejs";
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to record view" }, { status: 500 });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://wafaye-sponsor.com";
+  const baseUrl = getAppUrl();
   const pageUrl = request.headers.get("referer") || `${baseUrl}/`;
   const forwarded = request.headers.get("x-forwarded-for");
   const ip = forwarded?.split(",")[0]?.trim() ?? "unknown";

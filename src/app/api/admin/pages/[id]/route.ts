@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
 import { db } from "@/database/db";
+import { getAppUrl } from "@/lib/app-url";
 import { computePageStatus, normalizeIraqPhone } from "@/lib/linktree";
 
 export const runtime = "nodejs";
@@ -50,7 +51,7 @@ export async function GET(
       [pageId]
     );
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getAppUrl();
     const pageUrl = row.is_official ? `${baseUrl}/` : `${baseUrl}/p/${row.slug}`;
 
     return NextResponse.json({
@@ -190,7 +191,7 @@ export async function PATCH(
       [pageId]
     );
     const page = pageRes.rows[0];
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getAppUrl();
 
     return NextResponse.json({
       id: page.id,

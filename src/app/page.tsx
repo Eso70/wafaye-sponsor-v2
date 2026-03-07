@@ -12,6 +12,7 @@ import {
 import { FaInstagram, FaSnapchatGhost } from "react-icons/fa";
 import type { IconType } from "react-icons";
 import { PageViewTracker } from "@/components/PageViewTracker";
+import { getAppUrl } from "@/lib/app-url";
 
 const PLATFORM_ICONS: Record<string, IconType> = {
   whatsapp: FaWhatsapp,
@@ -34,7 +35,7 @@ const buttonVariants = [
 ];
 
 async function getOfficialPage() {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const base = getAppUrl();
   try {
     const res = await fetch(`${base}/api/pages/official`, { next: { revalidate: 60 } });
     if (!res.ok) return null;
@@ -49,7 +50,7 @@ export async function generateMetadata() {
   const title = data?.name ?? "Wafaye Sponsor";
   const description = data?.description ?? "Connect with Wafaye Sponsor. WhatsApp, Telegram, Viber & more.";
   const image = data?.image ?? "/images/Logo.jpg";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getAppUrl();
   const imageUrl = image.startsWith("http") ? image : `${baseUrl}${image}`;
 
   return {
@@ -87,7 +88,7 @@ export default async function Home() {
     { id: 0, label: "Phone Call", href: "tel:+9647509516125", color: "#1F5CE0", platformId: "phone" },
   ];
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getAppUrl();
   const imageUrl = image.startsWith("http") ? image : `${baseUrl}${image}`;
 
   const jsonLd = {

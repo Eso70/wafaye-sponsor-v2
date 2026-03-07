@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/database/db";
+import { getAppUrl } from "@/lib/app-url";
 
 export const runtime = "nodejs";
 
@@ -34,7 +35,7 @@ export async function GET() {
       [page.id]
     );
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getAppUrl();
     const links = linksRes.rows.map((row) => ({
       id: row.id,
       label: row.label || PLATFORM_LABELS[row.platform_id] || row.platform_id,

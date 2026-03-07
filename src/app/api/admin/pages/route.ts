@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
 import { db } from "@/database/db";
+import { getAppUrl } from "@/lib/app-url";
 import { computePageStatus, normalizeIraqPhone } from "@/lib/linktree";
 
 export const runtime = "nodejs";
@@ -39,7 +40,7 @@ export async function GET() {
        FROM linktree_pages p ORDER BY p.is_official DESC, p.updated_at DESC`
     );
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getAppUrl();
     const pages = res.rows.map((row) => ({
       id: row.id,
       name: row.name,
@@ -157,7 +158,7 @@ export async function POST(request: Request) {
 
     await db.query("COMMIT");
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getAppUrl();
     return NextResponse.json({
       id: page.id,
       name: page.name,

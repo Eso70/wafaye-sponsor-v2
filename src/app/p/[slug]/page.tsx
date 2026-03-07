@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa6";
 import { FaInstagram, FaSnapchatGhost } from "react-icons/fa";
 import type { IconType } from "react-icons";
+import { getAppUrl } from "@/lib/app-url";
 
 const PLATFORM_ICONS: Record<string, IconType> = {
   whatsapp: FaWhatsapp,
@@ -33,7 +34,7 @@ const buttonVariants = [
 ];
 
 async function getPageBySlug(slug: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const base = getAppUrl();
   try {
     const res = await fetch(`${base}/api/pages/${encodeURIComponent(slug)}`, {
       next: { revalidate: 60 },
@@ -59,7 +60,7 @@ export async function generateMetadata({
   const title = data.name;
   const description = data.description || `${data.name} - Contact links`;
   const image = data.image || "/images/DefaultAvatar.png";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getAppUrl();
   const canonicalUrl = `${baseUrl}/p/${data.slug}`;
   const imageUrl = image.startsWith("http") ? image : `${baseUrl}${image}`;
   const isExpired = data.status === "expired";
@@ -96,7 +97,7 @@ export default async function PageBySlug({
   if (!data) notFound();
 
   const { name, description, image, links, showFooter = true, sponsorName = "Wafaye Sponsor", sponsorPhone } = data;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getAppUrl();
   const imageUrl = (image || "/images/DefaultAvatar.png").startsWith("http")
     ? image
     : `${baseUrl}${image || "/images/DefaultAvatar.png"}`;
