@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { db } from "@/database/db";
 import { buildLinkHref } from "@/lib/linktree";
+import { sendClickButtonEvent } from "@/lib/tiktok-events";
 
 export const runtime = "nodejs";
 
@@ -53,6 +54,16 @@ export async function GET(
   } catch (err) {
     console.error("Track click error:", err);
   }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://wafaye-sponsor.com";
+  const referer = request.headers.get("referer") || request.headers.get("origin") || baseUrl;
+  sendClickButtonEvent(linkIdNum, link.platform_id, {
+    ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown",
+    userAgent: request.headers.get("user-agent") ?? "unknown",
+    externalId: fingerprint,
+    pageUrl: referer,
+    referrer: request.headers.get("referer") ?? undefined,
+  }).catch(() => {});
 
   const href = buildLinkHref(link.platform_id, link.value, link.default_message);
   return NextResponse.redirect(href);
