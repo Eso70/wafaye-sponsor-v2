@@ -65,13 +65,13 @@ export default function RootLayout({
       <head>
         <link rel="dns-prefetch" href="https://analytics.tiktok.com" />
         <link rel="preconnect" href="https://analytics.tiktok.com" crossOrigin="anonymous" />
-        <TikTokPixel />
       </head>
       <body
         suppressHydrationWarning
         className={`${primaryFont.variable} antialiased`}
       >
         {children}
+        <TikTokPixel />
       </body>
     </html>
   );
