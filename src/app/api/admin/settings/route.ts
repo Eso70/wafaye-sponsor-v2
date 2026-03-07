@@ -12,9 +12,6 @@ const ALLOWED_KEYS = [
   "TIKTOK_TEST_EVENT_CODE",
 ] as const;
 
-const DEFAULT_TIKTOK_PIXEL_ID = "D6M52Q3C77U160FIC8M0";
-const DEFAULT_TIKTOK_EVENT_API_ACCESS_TOKEN = "3773c09c919694d614c913af083a19967c7b4673";
-
 type EnvKey = (typeof ALLOWED_KEYS)[number];
 
 function getEnvPath(): string {
@@ -103,14 +100,14 @@ export async function GET() {
     const content = await readFile(getEnvPath(), "utf-8");
     const parsed = parseEnvFile(content);
     return NextResponse.json({
-      TIKTOK_PIXEL_ID: (parsed.TIKTOK_PIXEL_ID || "").trim() || DEFAULT_TIKTOK_PIXEL_ID,
-      TIKTOK_EVENT_API_ACCESS_TOKEN: (parsed.TIKTOK_EVENT_API_ACCESS_TOKEN || "").trim() || DEFAULT_TIKTOK_EVENT_API_ACCESS_TOKEN,
+      TIKTOK_PIXEL_ID: (parsed.TIKTOK_PIXEL_ID || "").trim(),
+      TIKTOK_EVENT_API_ACCESS_TOKEN: (parsed.TIKTOK_EVENT_API_ACCESS_TOKEN || "").trim(),
       TIKTOK_TEST_EVENT_CODE: parsed.TIKTOK_TEST_EVENT_CODE ?? "",
     });
   } catch {
     return NextResponse.json({
-      TIKTOK_PIXEL_ID: DEFAULT_TIKTOK_PIXEL_ID,
-      TIKTOK_EVENT_API_ACCESS_TOKEN: DEFAULT_TIKTOK_EVENT_API_ACCESS_TOKEN,
+      TIKTOK_PIXEL_ID: "",
+      TIKTOK_EVENT_API_ACCESS_TOKEN: "",
       TIKTOK_TEST_EVENT_CODE: "",
     });
   }
