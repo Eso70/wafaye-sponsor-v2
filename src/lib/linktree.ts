@@ -23,7 +23,11 @@ export function normalizeIraqPhone(value: string): string {
   if (rest.length === 9 && rest.startsWith("7")) return "964" + rest;
   // 9 digits not starting with 7 (e.g. 509516125) - likely missing leading 7 from 7509516125
   if (rest.length === 9 && !rest.startsWith("7")) rest = "7" + rest;
-  if (rest.length >= 9) return "964" + rest.slice(-9);
+  if (rest.length >= 9) {
+    let last9 = rest.slice(-9);
+    if (!last9.startsWith("7")) last9 = "7" + last9;
+    return "964" + last9;
+  }
   return "964" + rest;
 }
 

@@ -13,6 +13,7 @@ import { FaInstagram, FaSnapchatGhost } from "react-icons/fa";
 import type { IconType } from "react-icons";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { getAppUrl } from "@/lib/app-url";
+import { normalizeIraqPhone } from "@/lib/linktree";
 
 const PLATFORM_ICONS: Record<string, IconType> = {
   whatsapp: FaWhatsapp,
@@ -183,7 +184,7 @@ export default async function Home() {
               </p>
               {sponsorPhone ? (
                 <a
-                  href={`https://wa.me/${sponsorPhone.replace(/\D/g, "")}`}
+                  href={`https://wa.me/${normalizeIraqPhone(sponsorPhone) || sponsorPhone.replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-3 inline-flex min-h-[50px] items-center justify-center rounded-full border border-[#1f5ce0]/55 bg-white/20 px-9 py-3 text-sm font-semibold text-[#10359d] shadow-[0_10px_26px_rgba(17,52,150,0.14)] backdrop-blur-md transition hover:-translate-y-0.5 hover:border-[#1f5ce0]/80 hover:bg-white/30"
