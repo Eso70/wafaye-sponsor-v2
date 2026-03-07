@@ -1,5 +1,3 @@
-import Script from "next/script";
-
 export function TikTokPixel(): React.ReactElement | null {
   const pixelId = process.env.TIKTOK_PIXEL_ID?.trim() ?? "";
   if (!pixelId || !/^[A-Za-z0-9]+$/.test(pixelId)) {
@@ -7,9 +5,8 @@ export function TikTokPixel(): React.ReactElement | null {
   }
 
   return (
-    <Script
+    <script
       id="tiktok-pixel"
-      strategy="lazyOnload"
       dangerouslySetInnerHTML={{
         __html: `
           !function (w, d, t) {
