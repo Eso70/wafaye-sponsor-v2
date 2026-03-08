@@ -7,15 +7,37 @@ export const runtime = "nodejs";
 const PLATFORM_LABELS: Record<string, string> = {
   whatsapp: "WhatsApp",
   telegram: "Telegram",
+  tiktok: "TikTok",
   viber: "Viber",
   phone: "Phone Call",
+  facebook: "Facebook",
+  snapchat: "Snapchat",
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  twitter: "Twitter / X",
+  youtube: "YouTube",
+  discord: "Discord",
+  email: "Email",
+  website: "Website",
+  custom: "Custom Link",
 };
 
 const PLATFORM_COLORS: Record<string, string> = {
   whatsapp: "#25D366",
-  telegram: "#229ED9",
+  telegram: "#0088cc",
+  tiktok: "#000000",
   viber: "#7360F2",
   phone: "#1F5CE0",
+  facebook: "#1877F2",
+  snapchat: "#fffc00",
+  instagram: "#E4405F",
+  linkedin: "#0A66C2",
+  twitter: "#111111",
+  youtube: "#FF0000",
+  discord: "#5865F2",
+  email: "#9CA3AF",
+  website: "#6366f1",
+  custom: "#64748b",
 };
 
 export async function GET() {

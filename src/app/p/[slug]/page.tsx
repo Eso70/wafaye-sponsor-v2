@@ -10,6 +10,13 @@ import {
   FaTelegram,
   FaViber,
   FaWhatsapp,
+  FaTiktok,
+  FaLinkedin,
+  FaXTwitter,
+  FaYoutube,
+  FaDiscord,
+  FaEnvelope,
+  FaLink,
 } from "react-icons/fa6";
 import { FaInstagram, FaSnapchatGhost } from "react-icons/fa";
 import type { IconType } from "react-icons";
@@ -19,12 +26,19 @@ import { normalizeIraqPhone } from "@/lib/linktree";
 const PLATFORM_ICONS: Record<string, IconType> = {
   whatsapp: FaWhatsapp,
   telegram: FaTelegram,
+  tiktok: FaTiktok,
   viber: FaViber,
   phone: FaPhone,
   facebook: FaSquareFacebook,
-  instagram: FaInstagram,
   snapchat: FaSnapchatGhost,
-  custom: FaGlobe,
+  instagram: FaInstagram,
+  linkedin: FaLinkedin,
+  twitter: FaXTwitter,
+  youtube: FaYoutube,
+  discord: FaDiscord,
+  email: FaEnvelope,
+  website: FaGlobe,
+  custom: FaLink,
 };
 
 const buttonVariants = [
