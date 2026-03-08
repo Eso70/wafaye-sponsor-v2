@@ -134,12 +134,6 @@ export default async function PageBySlug({
         </div>
 
         <div className="w-full max-w-md text-center">
-          <Link
-            href="/"
-            className="mx-auto mb-4 inline-flex items-center rounded-full border border-[#a9bbee] bg-white/65 px-3 py-1 text-xs font-medium text-[#2048bf] backdrop-blur transition hover:bg-white/90"
-          >
-            Wafaye Sponsor
-          </Link>
 
           <div className="mx-auto w-fit">
             <Image

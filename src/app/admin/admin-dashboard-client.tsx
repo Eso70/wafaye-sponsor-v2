@@ -298,11 +298,7 @@ function sortPages(items: LinktreePage[], sortBy: SortBy): LinktreePage[] {
 
 function SettingsView() {
   const [pixelId, setPixelId] = useState("");
-  const [eventApiToken, setEventApiToken] = useState("");
-  const [testEventCode, setTestEventCode] = useState("");
-  const [testMode, setTestMode] = useState(false);
   const [showPixelId, setShowPixelId] = useState(false);
-  const [showEventApiToken, setShowEventApiToken] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -315,15 +311,9 @@ function SettingsView() {
         const res = await fetch("/api/admin/settings");
         if (!res.ok) throw new Error("Failed to load");
         const data = (await res.json()) as {
-          TIKTOK_PIXEL_ID?: string;
-          TIKTOK_EVENT_API_ACCESS_TOKEN?: string;
-          TIKTOK_TEST_EVENT_CODE?: string;
+          NEXT_PUBLIC_TIKTOK_PIXEL_ID?: string;
         };
-        setPixelId(data.TIKTOK_PIXEL_ID ?? "");
-        setEventApiToken(data.TIKTOK_EVENT_API_ACCESS_TOKEN ?? "");
-        const code = data.TIKTOK_TEST_EVENT_CODE ?? "";
-        setTestEventCode(code);
-        setTestMode(!!code);
+        setPixelId(data.NEXT_PUBLIC_TIKTOK_PIXEL_ID ?? "");
       } catch {
         setMessage({ type: "error", text: "Could not load TikTok settings." });
       } finally {
@@ -342,9 +332,7 @@ function SettingsView() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          TIKTOK_PIXEL_ID: pixelId.trim(),
-          TIKTOK_EVENT_API_ACCESS_TOKEN: eventApiToken.trim(),
-          TIKTOK_TEST_EVENT_CODE: testMode ? testEventCode.trim() : "",
+          NEXT_PUBLIC_TIKTOK_PIXEL_ID: pixelId.trim(),
         }),
       });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -381,17 +369,16 @@ function SettingsView() {
           TikTok Management
         </h3>
         <p className="mb-6 text-sm text-slate-600">
-          Configure TikTok Pixel and Events API. Changes are written directly to your{" "}
+          Configure TikTok Pixel. Changes are written directly to your{" "}
           <code className="rounded bg-slate-200 px-1.5 py-0.5 text-xs">.env</code> file.
         </p>
 
         {message ? (
           <p
-            className={`mb-6 rounded-full px-4 py-2.5 text-sm font-medium ${
-              message.type === "success"
-                ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border border-rose-200 bg-rose-50 text-rose-700"
-            }`}
+            className={`mb-6 rounded-full px-4 py-2.5 text-sm font-medium ${message.type === "success"
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border border-rose-200 bg-rose-50 text-rose-700"
+              }`}
           >
             {message.text}
           </p>
@@ -426,72 +413,8 @@ function SettingsView() {
               </p>
             </label>
 
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-700">TikTok Events API Access Token</span>
-              <div className="relative">
-                <input
-                  type={showEventApiToken ? "text" : "password"}
-                  value={eventApiToken}
-                  onChange={(e) => setEventApiToken(e.target.value)}
-                  className={`${inputClass} pr-12`}
-                  placeholder="Generate in Events Manager → Events API"
-                  autoComplete="off"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowEventApiToken((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-700"
-                  aria-label={showEventApiToken ? "Hide token" : "Show token"}
-                  title={showEventApiToken ? "Hide" : "Show"}
-                >
-                  {showEventApiToken ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">
-                Server-side Conversions API. Captures ~20–35% more conversions vs Pixel alone. Keep secret.
-              </p>
-            </label>
-          </div>
 
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <span className="block text-sm font-medium text-amber-900">Test Mode</span>
-                <span className="text-xs text-amber-800">
-                  Send events to Test Events tab without affecting live data.
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTestMode((p) => !p)}
-                role="switch"
-                aria-checked={testMode}
-                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition ${
-                  testMode ? "bg-amber-500" : "bg-slate-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-                    testMode ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-            {testMode ? (
-              <label className="mt-4 block">
-                <span className="mb-1 block text-xs font-medium text-amber-800">Test Event Code</span>
-                <input
-                  type="text"
-                  value={testEventCode}
-                  onChange={(e) => setTestEventCode(e.target.value)}
-                  className="w-full rounded-full border border-amber-300 bg-white px-4 py-2 text-sm"
-                  placeholder="e.g. TEST93891"
-                />
-                <p className="mt-1 text-[11px] text-amber-700">
-                  From Events Manager → Test Events tab. Remove before going live.
-                </p>
-              </label>
-            ) : null}
+
           </div>
 
           <button
@@ -510,22 +433,7 @@ function SettingsView() {
           Best practices for best results
         </h4>
         <ul className="space-y-3 text-sm text-slate-700">
-          <li className="flex gap-3">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-              <FaCheck className="text-[10px]" />
-            </span>
-            <span>
-              <strong>Use Pixel + Events API together</strong> — TikTok recommends both for maximum performance (client-side blockers miss 20–35% of conversions).
-            </span>
-          </li>
-          <li className="flex gap-3">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-              <FaCheck className="text-[10px]" />
-            </span>
-            <span>
-              <strong>Event deduplication</strong> — Pass the same <code className="rounded bg-slate-200 px-1 text-xs">event_id</code> in Pixel and Events API to avoid double-counting (48h window).
-            </span>
-          </li>
+
           <li className="flex gap-3">
             <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
               <FaCheck className="text-[10px]" />
@@ -733,116 +641,112 @@ export function AdminDashboardClient({ username }: { username: string }) {
 
       <section className="relative z-10 flex w-full">
         <aside
-          className={`fixed inset-y-0 left-0 z-[45] flex w-[min(320px,88vw)] flex-col border-r border-[#dbe4fb]/80 bg-gradient-to-b from-[#fafbff] to-[#f5f8ff] shadow-[0_30px_70px_rgba(15,23,42,0.35)] transition-transform duration-300 lg:z-10 lg:w-[280px] lg:translate-x-0 lg:shadow-none ${
-            mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`fixed inset-y-0 left-0 z-[45] flex w-[min(320px,88vw)] flex-col border-r border-[#dbe4fb]/80 bg-gradient-to-b from-[#fafbff] to-[#f5f8ff] shadow-[0_30px_70px_rgba(15,23,42,0.35)] transition-transform duration-300 lg:z-10 lg:w-[280px] lg:translate-x-0 lg:shadow-none ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
         >
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
-          <div className="pointer-events-none absolute -right-8 top-20 h-24 w-24 rounded-full bg-[#1f5ce0]/8 blur-2xl" />
-          <div className="pointer-events-none absolute -left-4 bottom-32 h-20 w-20 rounded-full bg-[#14b8a6]/10 blur-2xl" />
-          <div className="pointer-events-none absolute right-2 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full border border-[#d7e3ff]/40" />
+            <div className="pointer-events-none absolute -right-8 top-20 h-24 w-24 rounded-full bg-[#1f5ce0]/8 blur-2xl" />
+            <div className="pointer-events-none absolute -left-4 bottom-32 h-20 w-20 rounded-full bg-[#14b8a6]/10 blur-2xl" />
+            <div className="pointer-events-none absolute right-2 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full border border-[#d7e3ff]/40" />
 
-          <div className="relative mb-4 flex items-center justify-between lg:hidden">
-            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Navigation</p>
-            <button
-              type="button"
-              onClick={() => setMobileSidebarOpen(false)}
-              aria-label="Close sidebar"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#d6e1fb] bg-white text-[#2448a2] shadow-sm transition hover:border-[#1f5ce0]/50 hover:bg-[#f5f8ff]"
-            >
-              <FaXmark className="text-base" />
-            </button>
-          </div>
+            <div className="relative mb-4 flex items-center justify-between lg:hidden">
+              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Navigation</p>
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(false)}
+                aria-label="Close sidebar"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#d6e1fb] bg-white text-[#2448a2] shadow-sm transition hover:border-[#1f5ce0]/50 hover:bg-[#f5f8ff]"
+              >
+                <FaXmark className="text-base" />
+              </button>
+            </div>
 
-          <div className="relative overflow-hidden rounded-[1.5rem] border-2 border-[#d7e3ff]/60 bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] p-4 shadow-[0_8px_24px_rgba(31,92,224,0.08)]">
-            <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-[#1f5ce0]/5" />
-            <div className="absolute -bottom-4 -left-4 h-12 w-12 rounded-full bg-[#14b8a6]/5" />
-            <div className="relative flex items-center gap-3">
-              <Image
-                src="/images/Logo.jpg"
-                alt="Wafaye"
-                width={48}
-                height={48}
-                className="h-12 w-12 shrink-0 rounded-full border-2 border-white object-cover shadow-lg"
-              />
-              <div>
-                <p className="text-lg font-bold tracking-tight text-[#0f172a]">Wafaye Control</p>
-                <p className="text-xs font-medium text-slate-500">Sponsor admin system</p>
+            <div className="relative overflow-hidden rounded-[1.5rem] border-2 border-[#d7e3ff]/60 bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] p-4 shadow-[0_8px_24px_rgba(31,92,224,0.08)]">
+              <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-[#1f5ce0]/5" />
+              <div className="absolute -bottom-4 -left-4 h-12 w-12 rounded-full bg-[#14b8a6]/5" />
+              <div className="relative flex items-center gap-3">
+                <Image
+                  src="/images/Logo.jpg"
+                  alt="Wafaye"
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 shrink-0 rounded-full border-2 border-white object-cover shadow-lg"
+                />
+                <div>
+                  <p className="text-lg font-bold tracking-tight text-[#0f172a]">Wafaye Control</p>
+                  <p className="text-xs font-medium text-slate-500">Sponsor admin system</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="relative my-6 flex items-center gap-2">
-            <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#d7e3ff] to-transparent" />
-            <span className="h-2 w-2 rotate-45 rounded-sm bg-[#1f5ce0]/30" />
-            <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#d7e3ff] to-transparent" />
-          </div>
+            <div className="relative my-6 flex items-center gap-2">
+              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#d7e3ff] to-transparent" />
+              <span className="h-2 w-2 rotate-45 rounded-sm bg-[#1f5ce0]/30" />
+              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#d7e3ff] to-transparent" />
+            </div>
 
-          <div className="relative">
-            <p className="mb-3 flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#1f5ce0]" />
-              Menu
-            </p>
-            <nav className="space-y-1.5">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeView === item.id;
-                const isSettings = item.id === "settings";
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveView(item.id);
-                      setMobileSidebarOpen(false);
-                    }}
-                    className={`flex min-h-[48px] w-full touch-manipulation cursor-pointer items-center gap-3 rounded-full px-4 py-3 text-left text-base font-medium transition-all active:scale-[0.98] ${
-                      isActive
+            <div className="relative">
+              <p className="mb-3 flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#1f5ce0]" />
+                Menu
+              </p>
+              <nav className="space-y-1.5">
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeView === item.id;
+                  const isSettings = item.id === "settings";
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveView(item.id);
+                        setMobileSidebarOpen(false);
+                      }}
+                      className={`flex min-h-[48px] w-full touch-manipulation cursor-pointer items-center gap-3 rounded-full px-4 py-3 text-left text-base font-medium transition-all active:scale-[0.98] ${isActive
                         ? isSettings
                           ? "border-2 border-[#bde7f3] bg-gradient-to-r from-[#e6f9ff] to-[#e0f7fc] text-[#0b6a86] shadow-sm"
                           : "border-2 border-[#d7e3ff] bg-gradient-to-r from-[#edf3ff] to-[#e8f0ff] text-[#1f4fb3] shadow-sm"
                         : "border-2 border-transparent text-slate-600 hover:border-[#e2e8f0] hover:bg-slate-50 hover:text-slate-900"
-                    }`}
-                  >
-                    <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                        isActive ? (isSettings ? "bg-[#0b6a86]/15 text-[#0b6a86]" : "bg-[#1f5ce0]/15 text-[#1f4fb3]") : "bg-slate-100 text-slate-500"
-                      }`}
+                        }`}
                     >
-                      <Icon className="text-sm" />
-                    </span>
-                    {item.label}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          <div className="relative mt-auto pt-6">
-            <div className="mb-4 flex items-center gap-2">
-              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#f0b9c1] to-transparent" />
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-400/60" />
-              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#f0b9c1] to-transparent" />
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isActive ? (isSettings ? "bg-[#0b6a86]/15 text-[#0b6a86]" : "bg-[#1f5ce0]/15 text-[#1f4fb3]") : "bg-slate-100 text-slate-500"
+                          }`}
+                      >
+                        <Icon className="text-sm" />
+                      </span>
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </nav>
             </div>
-            <button
-              type="button"
-              onClick={logout}
-              disabled={loggingOut}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-rose-200 bg-gradient-to-r from-rose-50 to-rose-50/50 px-4 py-3 text-base font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:from-rose-100 hover:to-rose-50 disabled:opacity-70"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100">
-                <FaPowerOff className="text-sm text-rose-600" />
-              </span>
-              {loggingOut ? "Logging out..." : "Logout"}
-            </button>
-          </div>
+
+            <div className="relative mt-auto pt-6">
+              <div className="mb-4 flex items-center gap-2">
+                <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#f0b9c1] to-transparent" />
+                <span className="h-1.5 w-1.5 rounded-full bg-rose-400/60" />
+                <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#f0b9c1] to-transparent" />
+              </div>
+              <button
+                type="button"
+                onClick={logout}
+                disabled={loggingOut}
+                className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-rose-200 bg-gradient-to-r from-rose-50 to-rose-50/50 px-4 py-3 text-base font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:from-rose-100 hover:to-rose-50 disabled:opacity-70"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100">
+                  <FaPowerOff className="text-sm text-rose-600" />
+                </span>
+                {loggingOut ? "Logging out..." : "Logout"}
+              </button>
+            </div>
           </div>
         </aside>
 
         <div
-          className={`flex min-h-dvh min-w-0 flex-1 flex-col transition lg:ml-[280px] lg:h-dvh ${
-            mobileSidebarOpen ? "blur-[2px] lg:blur-none" : ""
-          }`}
+          className={`flex min-h-dvh min-w-0 flex-1 flex-col transition lg:ml-[280px] lg:h-dvh ${mobileSidebarOpen ? "blur-[2px] lg:blur-none" : ""
+            }`}
         >
           <header className="z-20 shrink-0 border-b border-slate-200/60 bg-white/90 px-4 py-3 backdrop-blur-xl sm:px-6">
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white/50 via-transparent to-white/30" />
@@ -881,7 +785,7 @@ export function AdminDashboardClient({ username }: { username: string }) {
                     <span className={`h-1 w-1 rounded-full ${activeView === "settings" ? "bg-[#0b6a86]" : "bg-emerald-500"}`} />
                     {activeView === "dashboard"
                       ? "Advanced Linktree pages manager"
-                      : "TikTok Pixel & Events API"}
+                      : "TikTok Pixel"}
                   </p>
                 </div>
               </div>
@@ -959,353 +863,350 @@ export function AdminDashboardClient({ username }: { username: string }) {
             {activeView === "settings" ? (
               <SettingsView />
             ) : (
-            <>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <StatCard
-                title="Total Pages"
-                value={formatNumber(totals.totalPages)}
-                subtitle="All profiles"
-                variant="blue"
-              />
-              <StatCard
-                title="Total Views"
-                value={formatNumber(totals.totalViews)}
-                subtitle="+12.5% this week"
-                variant="cyan"
-              />
-              <StatCard
-                title="Total Clicks"
-                value={formatNumber(totals.totalClicks)}
-                subtitle="+8.2% conversion"
-                variant="white"
-              />
-              <StatCard
-                title="CTR"
-                value={`${totals.ctr.toFixed(2)}%`}
-                subtitle={`${totals.activeCount} active pages`}
-                variant="mint"
-              />
-            </div>
-
-            <section className="mt-4 rounded-[1.5rem] border border-[#d6e3ff] bg-[linear-gradient(165deg,#ffffff_0%,#f7fbff_65%,#f5fffa_100%)] p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="inline-flex items-center gap-2 text-base font-semibold text-slate-900">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#1f5ce0]" />
-                  Page Control Center
-                </h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={refreshDashboard}
-                    disabled={refreshingDashboard}
-                    className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-[#cfe0ff] bg-[#eef4ff] px-4 text-sm font-semibold text-[#1f5ce0] transition hover:border-[#a9bff7] hover:bg-[#e8efff] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <FaArrowsRotate className={`text-xs ${refreshingDashboard ? "animate-spin" : ""}`} />
-                    Refresh
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setClearAnalyticsModalOpen(true)}
-                    disabled={totals.totalViews === 0 && totals.totalClicks === 0}
-                    className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-rose-200 bg-rose-50 px-4 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <FaTrash className="text-xs text-rose-600" />
-                    Clear All Analytics
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCreatePageModalOpen(true)}
-                    className="inline-flex h-10 items-center gap-2 rounded-full bg-[linear-gradient(90deg,#7d3aed_0%,#2563eb_50%,#14b8a6_100%)] px-4 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(71,85,235,0.35)] hover:brightness-105"
-                  >
-                    <FaBolt className="text-xs" />
-                    New Linktree Page
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-2 md:grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr_auto]">
-                <label className="inline-flex h-11 items-center gap-2 rounded-full border border-[#d8e3fb] bg-[#f8fbff] px-4">
-                  <FaMagnifyingGlass className="text-sm text-slate-500" />
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search by name, description, URL"
-                    className="w-full bg-transparent text-base text-slate-700 outline-none"
+              <>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <StatCard
+                    title="Total Pages"
+                    value={formatNumber(totals.totalPages)}
+                    subtitle="All profiles"
+                    variant="blue"
                   />
-                </label>
-
-                <FilterDropdown
-                  icon={FaFilter}
-                  value={statusFilter}
-                  options={statusFilterOptions}
-                  onChange={setStatusFilter}
-                />
-
-                <FilterDropdown
-                  icon={FaArrowTrendUp}
-                  value={sortBy}
-                  options={sortOptions}
-                  onChange={setSortBy}
-                />
-
-                <div className="inline-flex h-11 rounded-full border border-slate-300 bg-white p-1">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("grid")}
-                    className={`inline-flex items-center gap-1 rounded-full px-3 text-sm font-semibold ${
-                      viewMode === "grid" ? "bg-[#e8efff] text-[#1a43b6]" : "text-slate-600"
-                    }`}
-                  >
-                    <FaTableList className="text-xs" />
-                    Grid
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("list")}
-                    className={`inline-flex items-center gap-1 rounded-full px-3 text-sm font-semibold ${
-                      viewMode === "list" ? "bg-[#e8efff] text-[#1a43b6]" : "text-slate-600"
-                    }`}
-                  >
-                    <FaList className="text-xs" />
-                    List
-                  </button>
+                  <StatCard
+                    title="Total Views"
+                    value={formatNumber(totals.totalViews)}
+                    subtitle="+12.5% this week"
+                    variant="cyan"
+                  />
+                  <StatCard
+                    title="Total Clicks"
+                    value={formatNumber(totals.totalClicks)}
+                    subtitle="+8.2% conversion"
+                    variant="white"
+                  />
+                  <StatCard
+                    title="CTR"
+                    value={`${totals.ctr.toFixed(2)}%`}
+                    subtitle={`${totals.activeCount} active pages`}
+                    variant="mint"
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery("");
-                    setStatusFilter("all");
-                    setSortBy("updatedAt");
-                  }}
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-[#f8cfd6] bg-[#fff0f3] px-4 text-sm font-semibold text-[#a12a46] hover:bg-[#ffe2e8]"
-                >
-                  Reset
-                </button>
-              </div>
+                <section className="mt-4 rounded-[1.5rem] border border-[#d6e3ff] bg-[linear-gradient(165deg,#ffffff_0%,#f7fbff_65%,#f5fffa_100%)] p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="inline-flex items-center gap-2 text-base font-semibold text-slate-900">
+                      <span className="h-2.5 w-2.5 rounded-full bg-[#1f5ce0]" />
+                      Page Control Center
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={refreshDashboard}
+                        disabled={refreshingDashboard}
+                        className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-[#cfe0ff] bg-[#eef4ff] px-4 text-sm font-semibold text-[#1f5ce0] transition hover:border-[#a9bff7] hover:bg-[#e8efff] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <FaArrowsRotate className={`text-xs ${refreshingDashboard ? "animate-spin" : ""}`} />
+                        Refresh
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setClearAnalyticsModalOpen(true)}
+                        disabled={totals.totalViews === 0 && totals.totalClicks === 0}
+                        className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-rose-200 bg-rose-50 px-4 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <FaTrash className="text-xs text-rose-600" />
+                        Clear All Analytics
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCreatePageModalOpen(true)}
+                        className="inline-flex h-10 items-center gap-2 rounded-full bg-[linear-gradient(90deg,#7d3aed_0%,#2563eb_50%,#14b8a6_100%)] px-4 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(71,85,235,0.35)] hover:brightness-105"
+                      >
+                        <FaBolt className="text-xs" />
+                        New Linktree Page
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-full border border-[#d2e2ff] bg-[linear-gradient(90deg,#eef4ff_0%,#eefdf8_100%)] px-4 py-2 text-sm text-slate-600">
-                <p>
-                  Showing <span className="font-semibold text-slate-800">{filteredPages.length}</span>{" "}
-                  of <span className="font-semibold text-slate-800">{linktreePages.length}</span> pages
-                </p>
-                <p className="inline-flex items-center gap-1">
-                  <FaRegClock className="text-xs" />
-                  Last sync: 2 min ago
-                </p>
-              </div>
+                  <div className="mt-4 grid gap-2 md:grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr_auto]">
+                    <label className="inline-flex h-11 items-center gap-2 rounded-full border border-[#d8e3fb] bg-[#f8fbff] px-4">
+                      <FaMagnifyingGlass className="text-sm text-slate-500" />
+                      <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search by name, description, URL"
+                        className="w-full bg-transparent text-base text-slate-700 outline-none"
+                      />
+                    </label>
 
-              <div className="mt-4">
-                {filteredPages.length === 0 ? (
-                    <div className="rounded-[1.5rem] border border-dashed border-[#d4e2ff] bg-[linear-gradient(180deg,#f5f9ff_0%,#f0fffa_100%)] p-8 text-center">
-                    <p className="text-base font-semibold text-slate-800">No pages match your filters.</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Try a different search query or clear filters.
+                    <FilterDropdown
+                      icon={FaFilter}
+                      value={statusFilter}
+                      options={statusFilterOptions}
+                      onChange={setStatusFilter}
+                    />
+
+                    <FilterDropdown
+                      icon={FaArrowTrendUp}
+                      value={sortBy}
+                      options={sortOptions}
+                      onChange={setSortBy}
+                    />
+
+                    <div className="inline-flex h-11 rounded-full border border-slate-300 bg-white p-1">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("grid")}
+                        className={`inline-flex items-center gap-1 rounded-full px-3 text-sm font-semibold ${viewMode === "grid" ? "bg-[#e8efff] text-[#1a43b6]" : "text-slate-600"
+                          }`}
+                      >
+                        <FaTableList className="text-xs" />
+                        Grid
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("list")}
+                        className={`inline-flex items-center gap-1 rounded-full px-3 text-sm font-semibold ${viewMode === "list" ? "bg-[#e8efff] text-[#1a43b6]" : "text-slate-600"
+                          }`}
+                      >
+                        <FaList className="text-xs" />
+                        List
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        setStatusFilter("all");
+                        setSortBy("updatedAt");
+                      }}
+                      className="inline-flex h-11 items-center justify-center rounded-full border border-[#f8cfd6] bg-[#fff0f3] px-4 text-sm font-semibold text-[#a12a46] hover:bg-[#ffe2e8]"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-full border border-[#d2e2ff] bg-[linear-gradient(90deg,#eef4ff_0%,#eefdf8_100%)] px-4 py-2 text-sm text-slate-600">
+                    <p>
+                      Showing <span className="font-semibold text-slate-800">{filteredPages.length}</span>{" "}
+                      of <span className="font-semibold text-slate-800">{linktreePages.length}</span> pages
+                    </p>
+                    <p className="inline-flex items-center gap-1">
+                      <FaRegClock className="text-xs" />
+                      Last sync: 2 min ago
                     </p>
                   </div>
-                ) : viewMode === "grid" ? (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    {filteredPages.map((page) => (
-                      <article
-                        key={page.id}
-                        className={`flex flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 shadow-[0_8px_32px_rgba(31,92,224,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_48px_rgba(31,92,224,0.15)] ${cardClass(page.status, page.isOfficial)}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Image
-                            src={page.profileImage}
-                            alt={page.name}
-                            width={52}
-                            height={52}
-                            className="h-14 w-14 shrink-0 rounded-full border-2 border-white/80 object-cover shadow-md"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="truncate text-base font-semibold text-slate-900">{page.name}</p>
-                              <span
-                                className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusClass(page.status, page.isOfficial)}`}
-                              >
-                                {statusLabel(page.status, page.isOfficial)}
-                              </span>
+
+                  <div className="mt-4">
+                    {filteredPages.length === 0 ? (
+                      <div className="rounded-[1.5rem] border border-dashed border-[#d4e2ff] bg-[linear-gradient(180deg,#f5f9ff_0%,#f0fffa_100%)] p-8 text-center">
+                        <p className="text-base font-semibold text-slate-800">No pages match your filters.</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Try a different search query or clear filters.
+                        </p>
+                      </div>
+                    ) : viewMode === "grid" ? (
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {filteredPages.map((page) => (
+                          <article
+                            key={page.id}
+                            className={`flex flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 shadow-[0_8px_32px_rgba(31,92,224,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_48px_rgba(31,92,224,0.15)] ${cardClass(page.status, page.isOfficial)}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <Image
+                                src={page.profileImage}
+                                alt={page.name}
+                                width={52}
+                                height={52}
+                                className="h-14 w-14 shrink-0 rounded-full border-2 border-white/80 object-cover shadow-md"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="truncate text-base font-semibold text-slate-900">{page.name}</p>
+                                  <span
+                                    className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusClass(page.status, page.isOfficial)}`}
+                                  >
+                                    {statusLabel(page.status, page.isOfficial)}
+                                  </span>
+                                </div>
+                                <p className="mt-0.5 truncate text-xs text-slate-500">{page.description}</p>
+                                <p className="mt-1 text-[11px] text-slate-400">
+                                  Updated {formatDate(page.updatedAt)}
+                                </p>
+                              </div>
                             </div>
-                            <p className="mt-0.5 truncate text-xs text-slate-500">{page.description}</p>
-                            <p className="mt-1 text-[11px] text-slate-400">
-                              Updated {formatDate(page.updatedAt)}
-                            </p>
-                          </div>
-                        </div>
 
-                        <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2.5 shadow-sm">
-                          <p className="min-w-0 flex-1 truncate font-mono text-xs text-slate-700">{page.pageUrl}</p>
-                          <button
-                            type="button"
-                            onClick={() => copyLink(page)}
-                            className="shrink-0 inline-flex h-8 items-center gap-1 rounded-full border border-[#ffd8a8] bg-[#fff7eb] px-3 text-xs font-medium text-[#9b5c00] transition hover:bg-[#ffefcf]"
-                          >
-                            <FaCopy className="text-[11px] text-[#9b5c00]" />
-                            {copiedId === page.id ? "Copied" : "Copy"}
-                          </button>
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                          <Metric title="Views" value={formatNumber(page.views)} />
-                          <Metric title="Clicks" value={formatNumber(page.clicks)} />
-                        </div>
-
-                        <div className="mt-4">
-                          <div className="mb-1.5 flex items-center justify-between text-[11px] text-slate-500">
-                            <span>Expiry Health</span>
-                            <span>
-                              {page.isOfficial
-                                ? "Never expires"
-                                : daysUntil(page.expiresAt) <= 0
-                                  ? "Expired"
-                                  : `${daysUntil(page.expiresAt)} days left`}
-                            </span>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-200/80">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-500 ${
-                                page.isOfficial
-                                  ? "bg-[#0b6a86]"
-                                  : page.status === "expired"
-                                    ? "bg-rose-500"
-                                    : page.status === "expires_soon"
-                                      ? "bg-[#1f5ce0]"
-                                      : "bg-[#0b6a86]"
-                              }`}
-                              style={{ width: page.isOfficial ? "100%" : `${expiryProgress(page.expiresAt)}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-auto flex w-full items-center gap-2 pt-5">
-                          <button
-                            type="button"
-                            onClick={() => setViewPage(page)}
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-sky-300 bg-sky-50 px-3 py-2.5 text-sm font-medium text-sky-700 transition hover:bg-sky-100"
-                          >
-                            <FaEye className="text-xs text-sky-600" />
-                            View
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditPage(page)}
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-indigo-300 bg-indigo-50 px-3 py-2.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100"
-                          >
-                            <FaPencil className="text-xs text-indigo-600" />
-                            Edit
-                          </button>
-                          {!page.isOfficial ? (
-                            <button
-                              type="button"
-                              onClick={() => setDeletePage(page)}
-                              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-rose-300 bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
-                            >
-                              <FaTrash className="text-xs text-rose-600" />
-                              Delete
-                            </button>
-                          ) : (
-                            <span className="flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-400" title="Official page cannot be deleted">
-                              Protected
-                            </span>
-                          )}
-                          <a
-                            href={page.pageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Open page"
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 text-white transition hover:bg-emerald-600"
-                          >
-                            <FaArrowUpRightFromSquare className="text-sm" />
-                          </a>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="overflow-hidden rounded-2xl border border-[#d4e0ff]">
-                    <div className="hidden grid-cols-[1.2fr_0.55fr_0.45fr_0.45fr_0.8fr_0.65fr] gap-2 bg-[linear-gradient(90deg,#eef4ff_0%,#ecfff8_100%)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 md:grid">
-                      <span>Page</span>
-                      <span>Status</span>
-                      <span>Views</span>
-                      <span>Clicks</span>
-                      <span>Expiry</span>
-                      <span>Actions</span>
-                    </div>
-                    <div className="divide-y divide-slate-200">
-                      {filteredPages.map((page) => (
-                        <div
-                          key={page.id}
-                          className={`grid gap-2 px-3 py-3 md:grid-cols-[1.2fr_0.55fr_0.45fr_0.45fr_0.8fr_0.65fr] md:items-center ${rowClass(page.status, page.isOfficial)}`}
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-base font-semibold text-slate-900">{page.name}</p>
-                            <div className="mt-0.5 flex items-center gap-2">
-                              <p className="min-w-0 truncate text-sm text-slate-500">{page.pageUrl}</p>
+                            <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2.5 shadow-sm">
+                              <p className="min-w-0 flex-1 truncate font-mono text-xs text-slate-700">{page.pageUrl}</p>
                               <button
                                 type="button"
                                 onClick={() => copyLink(page)}
-                                className="shrink-0 inline-flex h-7 items-center gap-1 rounded-full border border-[#ffd8a8] bg-[#fff7eb] px-3 text-xs font-medium text-[#9b5c00] hover:bg-[#ffefcf]"
+                                className="shrink-0 inline-flex h-8 items-center gap-1 rounded-full border border-[#ffd8a8] bg-[#fff7eb] px-3 text-xs font-medium text-[#9b5c00] transition hover:bg-[#ffefcf]"
                               >
                                 <FaCopy className="text-[11px] text-[#9b5c00]" />
                                 {copiedId === page.id ? "Copied" : "Copy"}
                               </button>
                             </div>
-                          </div>
-                          <span
-                            className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusClass(page.status, page.isOfficial)}`}
-                          >
-                            {statusLabel(page.status, page.isOfficial)}
-                          </span>
-                          <span className="text-base text-slate-700">{formatNumber(page.views)}</span>
-                          <span className="text-base text-slate-700">{formatNumber(page.clicks)}</span>
-                          <span className="text-base text-slate-700">{page.isOfficial ? "Never" : formatDate(page.expiresAt)}</span>
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => setViewPage(page)}
-                              className="inline-flex h-8 items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-3 text-xs font-medium text-sky-700 hover:bg-sky-100"
-                            >
-                              <FaEye className="text-[11px] text-sky-600" />
-                              View
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditPage(page)}
-                              className="inline-flex h-8 items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-3 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
-                            >
-                              <FaPencil className="text-[11px] text-indigo-600" />
-                              Edit
-                            </button>
-                            {!page.isOfficial ? (
+
+                            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                              <Metric title="Views" value={formatNumber(page.views)} />
+                              <Metric title="Clicks" value={formatNumber(page.clicks)} />
+                            </div>
+
+                            <div className="mt-4">
+                              <div className="mb-1.5 flex items-center justify-between text-[11px] text-slate-500">
+                                <span>Expiry Health</span>
+                                <span>
+                                  {page.isOfficial
+                                    ? "Never expires"
+                                    : daysUntil(page.expiresAt) <= 0
+                                      ? "Expired"
+                                      : `${daysUntil(page.expiresAt)} days left`}
+                                </span>
+                              </div>
+                              <div className="h-2 rounded-full bg-slate-200/80">
+                                <div
+                                  className={`h-2 rounded-full transition-all duration-500 ${page.isOfficial
+                                    ? "bg-[#0b6a86]"
+                                    : page.status === "expired"
+                                      ? "bg-rose-500"
+                                      : page.status === "expires_soon"
+                                        ? "bg-[#1f5ce0]"
+                                        : "bg-[#0b6a86]"
+                                    }`}
+                                  style={{ width: page.isOfficial ? "100%" : `${expiryProgress(page.expiresAt)}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="mt-auto flex w-full items-center gap-2 pt-5">
                               <button
                                 type="button"
-                                onClick={() => setDeletePage(page)}
-                                className="inline-flex h-8 items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-3 text-xs font-medium text-rose-700 hover:bg-rose-100"
+                                onClick={() => setViewPage(page)}
+                                className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-sky-300 bg-sky-50 px-3 py-2.5 text-sm font-medium text-sky-700 transition hover:bg-sky-100"
                               >
-                                <FaTrash className="text-[11px] text-rose-600" />
-                                Delete
+                                <FaEye className="text-xs text-sky-600" />
+                                View
                               </button>
-                            ) : null}
-                            <a
-                              href={page.pageUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label="Open page"
-                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 text-white transition hover:bg-emerald-600"
-                            >
-                              <FaArrowUpRightFromSquare className="text-[11px]" />
-                            </a>
-                          </div>
+                              <button
+                                type="button"
+                                onClick={() => setEditPage(page)}
+                                className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-indigo-300 bg-indigo-50 px-3 py-2.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100"
+                              >
+                                <FaPencil className="text-xs text-indigo-600" />
+                                Edit
+                              </button>
+                              {!page.isOfficial ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletePage(page)}
+                                  className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-rose-300 bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+                                >
+                                  <FaTrash className="text-xs text-rose-600" />
+                                  Delete
+                                </button>
+                              ) : (
+                                <span className="flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-400" title="Official page cannot be deleted">
+                                  Protected
+                                </span>
+                              )}
+                              <a
+                                href={page.pageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Open page"
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 text-white transition hover:bg-emerald-600"
+                              >
+                                <FaArrowUpRightFromSquare className="text-sm" />
+                              </a>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="overflow-hidden rounded-2xl border border-[#d4e0ff]">
+                        <div className="hidden grid-cols-[1.2fr_0.55fr_0.45fr_0.45fr_0.8fr_0.65fr] gap-2 bg-[linear-gradient(90deg,#eef4ff_0%,#ecfff8_100%)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 md:grid">
+                          <span>Page</span>
+                          <span>Status</span>
+                          <span>Views</span>
+                          <span>Clicks</span>
+                          <span>Expiry</span>
+                          <span>Actions</span>
                         </div>
-                      ))}
-                    </div>
+                        <div className="divide-y divide-slate-200">
+                          {filteredPages.map((page) => (
+                            <div
+                              key={page.id}
+                              className={`grid gap-2 px-3 py-3 md:grid-cols-[1.2fr_0.55fr_0.45fr_0.45fr_0.8fr_0.65fr] md:items-center ${rowClass(page.status, page.isOfficial)}`}
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-base font-semibold text-slate-900">{page.name}</p>
+                                <div className="mt-0.5 flex items-center gap-2">
+                                  <p className="min-w-0 truncate text-sm text-slate-500">{page.pageUrl}</p>
+                                  <button
+                                    type="button"
+                                    onClick={() => copyLink(page)}
+                                    className="shrink-0 inline-flex h-7 items-center gap-1 rounded-full border border-[#ffd8a8] bg-[#fff7eb] px-3 text-xs font-medium text-[#9b5c00] hover:bg-[#ffefcf]"
+                                  >
+                                    <FaCopy className="text-[11px] text-[#9b5c00]" />
+                                    {copiedId === page.id ? "Copied" : "Copy"}
+                                  </button>
+                                </div>
+                              </div>
+                              <span
+                                className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusClass(page.status, page.isOfficial)}`}
+                              >
+                                {statusLabel(page.status, page.isOfficial)}
+                              </span>
+                              <span className="text-base text-slate-700">{formatNumber(page.views)}</span>
+                              <span className="text-base text-slate-700">{formatNumber(page.clicks)}</span>
+                              <span className="text-base text-slate-700">{page.isOfficial ? "Never" : formatDate(page.expiresAt)}</span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setViewPage(page)}
+                                  className="inline-flex h-8 items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-3 text-xs font-medium text-sky-700 hover:bg-sky-100"
+                                >
+                                  <FaEye className="text-[11px] text-sky-600" />
+                                  View
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditPage(page)}
+                                  className="inline-flex h-8 items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-3 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                                >
+                                  <FaPencil className="text-[11px] text-indigo-600" />
+                                  Edit
+                                </button>
+                                {!page.isOfficial ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeletePage(page)}
+                                    className="inline-flex h-8 items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-3 text-xs font-medium text-rose-700 hover:bg-rose-100"
+                                  >
+                                    <FaTrash className="text-[11px] text-rose-600" />
+                                    Delete
+                                  </button>
+                                ) : null}
+                                <a
+                                  href={page.pageUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label="Open page"
+                                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 text-white transition hover:bg-emerald-600"
+                                >
+                                  <FaArrowUpRightFromSquare className="text-[11px]" />
+                                </a>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </section>
-            </>
+                </section>
+              </>
             )}
           </section>
         </div>
@@ -1875,9 +1776,8 @@ function CreateLinktreeModal({
             {([1, 2, 3] as const).map((t) => (
               <span key={t} className="flex items-center gap-0.5">
                 <span
-                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${
-                    tab === t ? "bg-[#1f5ce0] text-white" : tab > t ? "bg-[#1f5ce0]/30 text-[#1f5ce0]" : "bg-slate-200 text-slate-400"
-                  }`}
+                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${tab === t ? "bg-[#1f5ce0] text-white" : tab > t ? "bg-[#1f5ce0]/30 text-[#1f5ce0]" : "bg-slate-200 text-slate-400"
+                    }`}
                 >
                   {t}
                 </span>
@@ -1981,16 +1881,14 @@ function CreateLinktreeModal({
                   <button
                     type="button"
                     onClick={() => setHideFooter((prev) => !prev)}
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
-                      hideFooter ? "bg-slate-300" : "bg-[#1f5ce0]"
-                    }`}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${hideFooter ? "bg-slate-300" : "bg-[#1f5ce0]"
+                      }`}
                     aria-pressed={!hideFooter}
                     aria-label={hideFooter ? "Footer hidden" : "Footer visible"}
                   >
                     <span
-                      className={`h-5 w-5 rounded-full bg-white transition ${
-                        hideFooter ? "translate-x-1" : "translate-x-6"
-                      }`}
+                      className={`h-5 w-5 rounded-full bg-white transition ${hideFooter ? "translate-x-1" : "translate-x-6"
+                        }`}
                     />
                   </button>
                 </div>
@@ -1999,16 +1897,16 @@ function CreateLinktreeModal({
                   <label className="block">
                     <span className="mb-1.5 block text-sm font-medium text-slate-700">Sponsor name</span>
                     <input
-                    type="text"
-                    value={sponsorName}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setSponsorName(v);
-                      if (typeof window !== "undefined") localStorage.setItem(DEFAULT_SPONSOR_KEY, v || "Wafaye Sponsor");
-                    }}
-                    className={inputClass}
-                    placeholder="Wafaye Sponsor"
-                  />
+                      type="text"
+                      value={sponsorName}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setSponsorName(v);
+                        if (typeof window !== "undefined") localStorage.setItem(DEFAULT_SPONSOR_KEY, v || "Wafaye Sponsor");
+                      }}
+                      className={inputClass}
+                      placeholder="Wafaye Sponsor"
+                    />
                   </label>
                   <label className="block">
                     <span className="mb-1.5 block text-sm font-medium text-slate-700">Sponsor phone</span>
@@ -2036,48 +1934,47 @@ function CreateLinktreeModal({
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                {(Object.keys(PLATFORM_CONFIG) as PlatformId[]).map((id, index) => {
-                  const cfg = PLATFORM_CONFIG[id];
-                  const Icon = cfg.icon;
-                  const checked = selectedPlatforms.includes(id);
-                  const brandStyle = PLATFORM_BUTTON_STYLE[id];
-                  const variantClass =
-                    index % 3 === 0
-                      ? "bg-[#f9fbff]"
-                      : index % 3 === 1
-                        ? "bg-[#f8fbff]"
-                        : "bg-[#f9fcfb]";
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => togglePlatform(id)}
-                      className={`relative flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-center transition-all ${variantClass} ${
-                        checked
+                  {(Object.keys(PLATFORM_CONFIG) as PlatformId[]).map((id, index) => {
+                    const cfg = PLATFORM_CONFIG[id];
+                    const Icon = cfg.icon;
+                    const checked = selectedPlatforms.includes(id);
+                    const brandStyle = PLATFORM_BUTTON_STYLE[id];
+                    const variantClass =
+                      index % 3 === 0
+                        ? "bg-[#f9fbff]"
+                        : index % 3 === 1
+                          ? "bg-[#f8fbff]"
+                          : "bg-[#f9fcfb]";
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => togglePlatform(id)}
+                        className={`relative flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-center transition-all ${variantClass} ${checked
                           ? "border-emerald-300 bg-[#f8fafc] shadow-[0_8px_18px_rgba(15,23,42,0.08)] ring-1 ring-emerald-200"
                           : "border-[#d0d7e2] bg-[#f8fafc] hover:border-[#b9c4d4] hover:bg-[#f4f7fb]"
-                      }`}
-                    >
-                      {checked ? (
-                        <span className="absolute right-1.5 top-1.5 inline-flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
-                          <FaCheck className="text-[9px]" />
-                        </span>
-                      ) : null}
-                      <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg shadow-[0_5px_12px_rgba(0,0,0,0.12)]"
-                        style={{ backgroundImage: brandStyle.iconGradient, color: brandStyle.iconColor }}
+                          }`}
                       >
-                        <Icon className="text-base" />
-                      </span>
-                      <span className="text-[12px] font-semibold leading-tight text-slate-900">
-                        {cfg.label}
-                      </span>
-                    </button>
-                  );
-                })}
+                        {checked ? (
+                          <span className="absolute right-1.5 top-1.5 inline-flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
+                            <FaCheck className="text-[9px]" />
+                          </span>
+                        ) : null}
+                        <span
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg shadow-[0_5px_12px_rgba(0,0,0,0.12)]"
+                          style={{ backgroundImage: brandStyle.iconGradient, color: brandStyle.iconColor }}
+                        >
+                          <Icon className="text-base" />
+                        </span>
+                        <span className="text-[12px] font-semibold leading-tight text-slate-900">
+                          {cfg.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
             {tab === 3 && (
               <div className="relative space-y-4 px-1 py-1">
@@ -2095,133 +1992,133 @@ function CreateLinktreeModal({
                 ) : (
                   <div className="max-h-[28rem] overflow-y-auto">
                     <div className="grid grid-cols-1 gap-3">
-                    {platformInstances.map((instance, index) => {
-                      const id = instance.platformId;
-                      const cfg = PLATFORM_CONFIG[id];
-                      const Icon = cfg.icon;
-                      const value = linkValues[String(instance.id)] ?? "";
-                      const isCustom = id === "custom";
-                      return (
-                        <div key={instance.id} className="rounded-2xl border border-[#d7e2f8] bg-white p-4 shadow-sm">
-                          <div className="mb-2 flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 items-center gap-2">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundColor: cfg.color }}>
-                              <Icon className="text-sm" />
-                            </span>
-                            <div className="min-w-0">
-                              <span className="block truncate text-sm font-semibold text-slate-800">{cfg.label}</span>
-                              <span className="block text-[11px] text-slate-500">
-                                {cfg.type === "phone"
-                                  ? "Enter phone number"
-                                  : cfg.type === "username"
-                                    ? "Enter username only"
-                                    : cfg.type === "url"
-                                      ? "Enter full URL"
-                                      : "Enter custom value"}
-                              </span>
-                            </div>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => movePlatformInstance(instance.id, "up")}
-                                disabled={index === 0}
-                                className="rounded-full border border-[#d7e2f8] bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                aria-label="Move up"
-                              >
-                                <FaArrowUp className="text-[10px]" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => movePlatformInstance(instance.id, "down")}
-                                disabled={index === platformInstances.length - 1}
-                                className="rounded-full border border-[#d7e2f8] bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                aria-label="Move down"
-                              >
-                                <FaArrowDown className="text-[10px]" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => addPlatformInstance(id)}
-                                className="rounded-full border border-[#cfe0ff] bg-[#edf3ff] px-3 py-1 text-xs font-semibold text-[#244ea8] hover:bg-[#e5eeff]"
-                              >
-                                Add
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removePlatformInstance(instance.id, id)}
-                                className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-                          {isCustom ? (
-                            <div className="space-y-2">
-                              <input
-                                type="text"
-                                value={customLabels[String(instance.id)] ?? ""}
-                                onChange={(e) =>
-                                  setCustomLabels((p) => ({ ...p, [String(instance.id)]: e.target.value }))
-                                }
-                                className={inputClass}
-                                placeholder="Link label"
-                              />
-                              <input
-                                type="url"
-                                value={value}
-                                onChange={(e) =>
-                                  setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))
-                                }
-                                className={inputClass}
-                                placeholder={cfg.placeholder}
-                              />
-                            </div>
-                          ) : (
-                            <div className="space-y-1.5">
-                              {cfg.prefix ? (
-                                <p className="text-[11px] text-slate-500">
-                                  Prefix: <span className="font-medium text-slate-700">{cfg.prefix}</span>
-                                </p>
-                              ) : null}
-                              {IRAQ_PHONE_PLATFORMS.includes(id) ? (
-                                <p className="text-[11px] text-slate-500">
-                                  +964 (Iraq) added automatically
-                                </p>
-                              ) : null}
-                              <input
-                                type={cfg.type === "phone" ? "tel" : cfg.type === "url" ? "url" : "text"}
-                                value={value}
-                                onChange={(e) =>
-                                  setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))
-                                }
-                                className={inputClass}
-                                placeholder={cfg.placeholder}
-                              />
-                              {DEFAULT_MESSAGE_PLATFORMS.includes(id) ? (
-                                <div className="mt-2">
-                                  <label className="mb-1 block text-[11px] font-medium text-slate-500">
-                                    Default message (optional)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={defaultMessages[String(instance.id)] ?? ""}
-                                    onChange={(e) =>
-                                      setDefaultMessages((p) => ({
-                                        ...p,
-                                        [String(instance.id)]: e.target.value,
-                                      }))
-                                    }
-                                    className={inputClass}
-                                    placeholder="e.g. Hi! I'm interested in your sponsor services."
-                                  />
+                      {platformInstances.map((instance, index) => {
+                        const id = instance.platformId;
+                        const cfg = PLATFORM_CONFIG[id];
+                        const Icon = cfg.icon;
+                        const value = linkValues[String(instance.id)] ?? "";
+                        const isCustom = id === "custom";
+                        return (
+                          <div key={instance.id} className="rounded-2xl border border-[#d7e2f8] bg-white p-4 shadow-sm">
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundColor: cfg.color }}>
+                                  <Icon className="text-sm" />
+                                </span>
+                                <div className="min-w-0">
+                                  <span className="block truncate text-sm font-semibold text-slate-800">{cfg.label}</span>
+                                  <span className="block text-[11px] text-slate-500">
+                                    {cfg.type === "phone"
+                                      ? "Enter phone number"
+                                      : cfg.type === "username"
+                                        ? "Enter username only"
+                                        : cfg.type === "url"
+                                          ? "Enter full URL"
+                                          : "Enter custom value"}
+                                  </span>
                                 </div>
-                              ) : null}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => movePlatformInstance(instance.id, "up")}
+                                  disabled={index === 0}
+                                  className="rounded-full border border-[#d7e2f8] bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                  aria-label="Move up"
+                                >
+                                  <FaArrowUp className="text-[10px]" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => movePlatformInstance(instance.id, "down")}
+                                  disabled={index === platformInstances.length - 1}
+                                  className="rounded-full border border-[#d7e2f8] bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                  aria-label="Move down"
+                                >
+                                  <FaArrowDown className="text-[10px]" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => addPlatformInstance(id)}
+                                  className="rounded-full border border-[#cfe0ff] bg-[#edf3ff] px-3 py-1 text-xs font-semibold text-[#244ea8] hover:bg-[#e5eeff]"
+                                >
+                                  Add
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removePlatformInstance(instance.id, id)}
+                                  className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                                >
+                                  Remove
+                                </button>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            {isCustom ? (
+                              <div className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={customLabels[String(instance.id)] ?? ""}
+                                  onChange={(e) =>
+                                    setCustomLabels((p) => ({ ...p, [String(instance.id)]: e.target.value }))
+                                  }
+                                  className={inputClass}
+                                  placeholder="Link label"
+                                />
+                                <input
+                                  type="url"
+                                  value={value}
+                                  onChange={(e) =>
+                                    setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))
+                                  }
+                                  className={inputClass}
+                                  placeholder={cfg.placeholder}
+                                />
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                {cfg.prefix ? (
+                                  <p className="text-[11px] text-slate-500">
+                                    Prefix: <span className="font-medium text-slate-700">{cfg.prefix}</span>
+                                  </p>
+                                ) : null}
+                                {IRAQ_PHONE_PLATFORMS.includes(id) ? (
+                                  <p className="text-[11px] text-slate-500">
+                                    +964 (Iraq) added automatically
+                                  </p>
+                                ) : null}
+                                <input
+                                  type={cfg.type === "phone" ? "tel" : cfg.type === "url" ? "url" : "text"}
+                                  value={value}
+                                  onChange={(e) =>
+                                    setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))
+                                  }
+                                  className={inputClass}
+                                  placeholder={cfg.placeholder}
+                                />
+                                {DEFAULT_MESSAGE_PLATFORMS.includes(id) ? (
+                                  <div className="mt-2">
+                                    <label className="mb-1 block text-[11px] font-medium text-slate-500">
+                                      Default message (optional)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={defaultMessages[String(instance.id)] ?? ""}
+                                      onChange={(e) =>
+                                        setDefaultMessages((p) => ({
+                                          ...p,
+                                          [String(instance.id)]: e.target.value,
+                                        }))
+                                      }
+                                      className={inputClass}
+                                      placeholder="e.g. Hi! I'm interested in your sponsor services."
+                                    />
+                                  </div>
+                                ) : null}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -2589,9 +2486,8 @@ function EditLinktreeModal({
             {([1, 2, 3] as const).map((t) => (
               <span key={t} className="flex items-center gap-0.5">
                 <span
-                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${
-                    tab === t ? "bg-[#1f5ce0] text-white" : tab > t ? "bg-[#1f5ce0]/30 text-[#1f5ce0]" : "bg-slate-200 text-slate-400"
-                  }`}
+                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${tab === t ? "bg-[#1f5ce0] text-white" : tab > t ? "bg-[#1f5ce0]/30 text-[#1f5ce0]" : "bg-slate-200 text-slate-400"
+                    }`}
                 >
                   {t}
                 </span>
@@ -2709,9 +2605,8 @@ function EditLinktreeModal({
                         key={id}
                         type="button"
                         onClick={() => togglePlatform(id)}
-                        className={`relative flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-center transition-all ${variantClass} ${
-                          checked ? "border-emerald-300 bg-[#f8fafc] shadow-[0_8px_18px_rgba(15,23,42,0.08)] ring-1 ring-emerald-200" : "border-[#d0d7e2] bg-[#f8fafc] hover:border-[#b9c4d4] hover:bg-[#f4f7fb]"
-                        }`}
+                        className={`relative flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-center transition-all ${variantClass} ${checked ? "border-emerald-300 bg-[#f8fafc] shadow-[0_8px_18px_rgba(15,23,42,0.08)] ring-1 ring-emerald-200" : "border-[#d0d7e2] bg-[#f8fafc] hover:border-[#b9c4d4] hover:bg-[#f4f7fb]"
+                          }`}
                       >
                         {checked ? <span className="absolute right-1.5 top-1.5 inline-flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm"><FaCheck className="text-[9px]" /></span> : null}
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg shadow-[0_5px_12px_rgba(0,0,0,0.12)]" style={{ backgroundImage: brandStyle.iconGradient, color: brandStyle.iconColor }}>
@@ -2738,64 +2633,64 @@ function EditLinktreeModal({
                 ) : (
                   <div className="max-h-[28rem] overflow-y-auto">
                     <div className="grid grid-cols-1 gap-3">
-                    {platformInstances.map((instance, index) => {
-                      const id = instance.platformId;
-                      const cfg = PLATFORM_CONFIG[id];
-                      const Icon = cfg.icon;
-                      const value = linkValues[String(instance.id)] ?? "";
-                      const isCustom = id === "custom";
-                      return (
-                        <div key={instance.id} className="rounded-2xl border border-[#d7e2f8] bg-white p-4 shadow-sm">
-                          <div className="mb-2 flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundColor: cfg.color }}>
-                                <Icon className="text-sm" />
-                              </span>
-                              <div className="min-w-0">
-                                <span className="block truncate text-sm font-semibold text-slate-800">{cfg.label}</span>
-                                <span className="block text-[11px] text-slate-500">
-                                  {cfg.type === "phone" ? "Enter phone number" : cfg.type === "username" ? "Enter username only" : cfg.type === "url" ? "Enter full URL" : "Enter custom value"}
+                      {platformInstances.map((instance, index) => {
+                        const id = instance.platformId;
+                        const cfg = PLATFORM_CONFIG[id];
+                        const Icon = cfg.icon;
+                        const value = linkValues[String(instance.id)] ?? "";
+                        const isCustom = id === "custom";
+                        return (
+                          <div key={instance.id} className="rounded-2xl border border-[#d7e2f8] bg-white p-4 shadow-sm">
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundColor: cfg.color }}>
+                                  <Icon className="text-sm" />
                                 </span>
+                                <div className="min-w-0">
+                                  <span className="block truncate text-sm font-semibold text-slate-800">{cfg.label}</span>
+                                  <span className="block text-[11px] text-slate-500">
+                                    {cfg.type === "phone" ? "Enter phone number" : cfg.type === "username" ? "Enter username only" : cfg.type === "url" ? "Enter full URL" : "Enter custom value"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <button type="button" onClick={() => movePlatformInstance(instance.id, "up")} disabled={index === 0} className="rounded-full border border-[#d7e2f8] bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" aria-label="Move up">
+                                  <FaArrowUp className="text-[10px]" />
+                                </button>
+                                <button type="button" onClick={() => movePlatformInstance(instance.id, "down")} disabled={index === platformInstances.length - 1} className="rounded-full border border-[#d7e2f8] bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" aria-label="Move down">
+                                  <FaArrowDown className="text-[10px]" />
+                                </button>
+                                <button type="button" onClick={() => addPlatformInstance(id)} className="rounded-full border border-[#cfe0ff] bg-[#edf3ff] px-3 py-1 text-xs font-semibold text-[#244ea8] hover:bg-[#e5eeff]">Add</button>
+                                <button type="button" onClick={() => removePlatformInstance(instance.id, id)} className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100">Remove</button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <button type="button" onClick={() => movePlatformInstance(instance.id, "up")} disabled={index === 0} className="rounded-full border border-[#d7e2f8] bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" aria-label="Move up">
-                                <FaArrowUp className="text-[10px]" />
-                              </button>
-                              <button type="button" onClick={() => movePlatformInstance(instance.id, "down")} disabled={index === platformInstances.length - 1} className="rounded-full border border-[#d7e2f8] bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" aria-label="Move down">
-                                <FaArrowDown className="text-[10px]" />
-                              </button>
-                              <button type="button" onClick={() => addPlatformInstance(id)} className="rounded-full border border-[#cfe0ff] bg-[#edf3ff] px-3 py-1 text-xs font-semibold text-[#244ea8] hover:bg-[#e5eeff]">Add</button>
-                              <button type="button" onClick={() => removePlatformInstance(instance.id, id)} className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100">Remove</button>
-                            </div>
+                            {isCustom ? (
+                              <div className="space-y-2">
+                                <input type="text" value={customLabels[String(instance.id)] ?? ""} onChange={(e) => setCustomLabels((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder="Link label" />
+                                <input type="url" value={value} onChange={(e) => setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder={cfg.placeholder} />
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                {cfg.prefix ? <p className="text-[11px] text-slate-500">Prefix: <span className="font-medium text-slate-700">{cfg.prefix}</span></p> : null}
+                                {IRAQ_PHONE_PLATFORMS.includes(id) ? <p className="text-[11px] text-slate-500">+964 (Iraq) added automatically</p> : null}
+                                <input
+                                  type={cfg.type === "phone" ? "tel" : cfg.type === "url" ? "url" : "text"}
+                                  value={value}
+                                  onChange={(e) => setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))}
+                                  className={inputClass}
+                                  placeholder={cfg.placeholder}
+                                />
+                                {DEFAULT_MESSAGE_PLATFORMS.includes(id) ? (
+                                  <div className="mt-2">
+                                    <label className="mb-1 block text-[11px] font-medium text-slate-500">Default message (optional)</label>
+                                    <input type="text" value={defaultMessages[String(instance.id)] ?? ""} onChange={(e) => setDefaultMessages((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder="e.g. Hi! I'm interested in your sponsor services." />
+                                  </div>
+                                ) : null}
+                              </div>
+                            )}
                           </div>
-                          {isCustom ? (
-                            <div className="space-y-2">
-                              <input type="text" value={customLabels[String(instance.id)] ?? ""} onChange={(e) => setCustomLabels((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder="Link label" />
-                              <input type="url" value={value} onChange={(e) => setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder={cfg.placeholder} />
-                            </div>
-                          ) : (
-                            <div className="space-y-1.5">
-                              {cfg.prefix ? <p className="text-[11px] text-slate-500">Prefix: <span className="font-medium text-slate-700">{cfg.prefix}</span></p> : null}
-                              {IRAQ_PHONE_PLATFORMS.includes(id) ? <p className="text-[11px] text-slate-500">+964 (Iraq) added automatically</p> : null}
-                              <input
-                                type={cfg.type === "phone" ? "tel" : cfg.type === "url" ? "url" : "text"}
-                                value={value}
-                                onChange={(e) => setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))}
-                                className={inputClass}
-                                placeholder={cfg.placeholder}
-                              />
-                              {DEFAULT_MESSAGE_PLATFORMS.includes(id) ? (
-                                <div className="mt-2">
-                                  <label className="mb-1 block text-[11px] font-medium text-slate-500">Default message (optional)</label>
-                                  <input type="text" value={defaultMessages[String(instance.id)] ?? ""} onChange={(e) => setDefaultMessages((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder="e.g. Hi! I'm interested in your sponsor services." />
-                                </div>
-                              ) : null}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -2983,11 +2878,10 @@ function ProfileModal({
             <button
               type="button"
               onClick={() => { onTabChange("password"); onClearMessage(); }}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
-                activeTab === "password"
-                  ? "bg-[#e8efff] text-[#1a43b6] shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition ${activeTab === "password"
+                ? "bg-[#e8efff] text-[#1a43b6] shadow-sm"
+                : "text-slate-600 hover:bg-slate-100"
+                }`}
             >
               <FaKey className="text-sm" />
               Change Password
@@ -2995,11 +2889,10 @@ function ProfileModal({
             <button
               type="button"
               onClick={() => { onTabChange("username"); onClearMessage(); }}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
-                activeTab === "username"
-                  ? "bg-[#e8efff] text-[#1a43b6] shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition ${activeTab === "username"
+                ? "bg-[#e8efff] text-[#1a43b6] shadow-sm"
+                : "text-slate-600 hover:bg-slate-100"
+                }`}
             >
               <FaUserPen className="text-sm" />
               Change Username
@@ -3010,11 +2903,10 @@ function ProfileModal({
         <div className="p-6">
           {message ? (
             <p
-              className={`mb-4 rounded-full px-4 py-2.5 text-sm font-medium ${
-                message.type === "success"
-                  ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                  : "border border-rose-200 bg-rose-50 text-rose-700"
-              }`}
+              className={`mb-4 rounded-full px-4 py-2.5 text-sm font-medium ${message.type === "success"
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border border-rose-200 bg-rose-50 text-rose-700"
+                }`}
             >
               {message.text}
             </p>
@@ -3195,11 +3087,10 @@ function FilterDropdown<T extends string>({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`group inline-flex h-11 w-full items-center gap-2 rounded-full border px-4 text-base transition ${
-          open
-            ? "border-[#aac4ff] bg-[linear-gradient(135deg,#f5f8ff_0%,#f2fffc_100%)] shadow-[0_8px_18px_rgba(91,121,214,0.14)]"
-            : "border-[#d9e3f8] bg-[linear-gradient(135deg,#ffffff_0%,#f9fbff_100%)] hover:border-[#c6d7fb] hover:bg-[linear-gradient(135deg,#f7faff_0%,#f3fffb_100%)]"
-        }`}
+        className={`group inline-flex h-11 w-full items-center gap-2 rounded-full border px-4 text-base transition ${open
+          ? "border-[#aac4ff] bg-[linear-gradient(135deg,#f5f8ff_0%,#f2fffc_100%)] shadow-[0_8px_18px_rgba(91,121,214,0.14)]"
+          : "border-[#d9e3f8] bg-[linear-gradient(135deg,#ffffff_0%,#f9fbff_100%)] hover:border-[#c6d7fb] hover:bg-[linear-gradient(135deg,#f7faff_0%,#f3fffb_100%)]"
+          }`}
       >
         <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ecf2ff] text-[#3f63b7]">
           <Icon className="text-sm" />
@@ -3223,18 +3114,16 @@ function FilterDropdown<T extends string>({
                     onChange(option.value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 rounded-full px-4 py-2.5 text-left text-sm transition ${
-                    selected
-                      ? "bg-[linear-gradient(135deg,#eaf0ff_0%,#e7fff8_100%)] text-[#28469c]"
-                      : "text-slate-700 hover:bg-[#f2f6ff]"
-                  }`}
+                  className={`flex w-full items-center gap-2 rounded-full px-4 py-2.5 text-left text-sm transition ${selected
+                    ? "bg-[linear-gradient(135deg,#eaf0ff_0%,#e7fff8_100%)] text-[#28469c]"
+                    : "text-slate-700 hover:bg-[#f2f6ff]"
+                    }`}
                 >
                   <span
-                    className={`inline-flex h-5 w-5 items-center justify-center rounded-full border ${
-                      selected
-                        ? "border-[#86a3f7] bg-[#dfe8ff] text-[#2a4eb4]"
-                        : "border-[#d5deef] bg-white text-transparent"
-                    }`}
+                    className={`inline-flex h-5 w-5 items-center justify-center rounded-full border ${selected
+                      ? "border-[#86a3f7] bg-[#dfe8ff] text-[#2a4eb4]"
+                      : "border-[#d5deef] bg-white text-transparent"
+                      }`}
                   >
                     <FaCheck className="text-[10px]" />
                   </span>

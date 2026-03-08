@@ -123,9 +123,6 @@ export default async function Home() {
         </div>
 
         <div className="w-full max-w-md text-center">
-          <p className="mx-auto mb-4 inline-flex items-center rounded-full border border-[#a9bbee] bg-white/65 px-3 py-1 text-xs font-medium text-[#2048bf] backdrop-blur">
-            Official Sponsor Bio
-          </p>
 
           <div className="mx-auto w-fit">
             <Image

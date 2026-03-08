@@ -7,9 +7,7 @@ import { verifySessionToken } from "@/lib/auth";
 export const runtime = "nodejs";
 
 const ALLOWED_KEYS = [
-  "TIKTOK_PIXEL_ID",
-  "TIKTOK_EVENT_API_ACCESS_TOKEN",
-  "TIKTOK_TEST_EVENT_CODE",
+  "NEXT_PUBLIC_TIKTOK_PIXEL_ID",
 ] as const;
 
 type EnvKey = (typeof ALLOWED_KEYS)[number];
@@ -100,15 +98,11 @@ export async function GET() {
     const content = await readFile(getEnvPath(), "utf-8");
     const parsed = parseEnvFile(content);
     return NextResponse.json({
-      TIKTOK_PIXEL_ID: (parsed.TIKTOK_PIXEL_ID || "").trim(),
-      TIKTOK_EVENT_API_ACCESS_TOKEN: (parsed.TIKTOK_EVENT_API_ACCESS_TOKEN || "").trim(),
-      TIKTOK_TEST_EVENT_CODE: parsed.TIKTOK_TEST_EVENT_CODE ?? "",
+      NEXT_PUBLIC_TIKTOK_PIXEL_ID: (parsed.NEXT_PUBLIC_TIKTOK_PIXEL_ID || "").trim(),
     });
   } catch {
     return NextResponse.json({
-      TIKTOK_PIXEL_ID: "",
-      TIKTOK_EVENT_API_ACCESS_TOKEN: "",
-      TIKTOK_TEST_EVENT_CODE: "",
+      NEXT_PUBLIC_TIKTOK_PIXEL_ID: "",
     });
   }
 }

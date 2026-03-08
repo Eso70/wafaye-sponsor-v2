@@ -10,6 +10,22 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           {
+            key: "Access-Control-Allow-Origin",
+            value: process.env.ALLOWED_ORIGINS || "*",
+          },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET, POST, PUT, DELETE, OPTIONS",
+          },
+          {
+            key: "Access-Control-Allow-Headers",
+            value: "X-Requested-With, Content-Type, Authorization",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;",
+          },
+          {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
           },

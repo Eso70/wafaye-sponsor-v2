@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { db } from "@/database/db";
 import { buildLinkHref } from "@/lib/linktree";
-import { sendTiktokEvent } from "@/lib/tiktok-events";
 
 export const runtime = "nodejs";
 
@@ -71,26 +70,7 @@ export async function GET(
     console.error("Track click error:", err);
   }
 
-  if (isNewClick) {
-    try {
-      const pageUrl =
-        request.headers.get("referer") ||
-        new URL("/", request.url).toString();
 
-      await sendTiktokEvent({
-        eventName: "ClickButton",
-        eventId: `click_${linkIdNum}_${fingerprint}`,
-        request,
-        url: pageUrl,
-        contentId: String(link.id),
-        contentType: "button",
-        contentName: `${link.platform_id} button`,
-        description: link.page_name,
-      });
-    } catch (err) {
-      console.error("TikTok ClickButton send error:", err);
-    }
-  }
 
   const href = buildLinkHref(link.platform_id, link.value, link.default_message);
   return NextResponse.redirect(href);

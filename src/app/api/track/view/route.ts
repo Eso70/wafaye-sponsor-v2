@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { db } from "@/database/db";
-import { sendTiktokEvent } from "@/lib/tiktok-events";
 
 export const runtime = "nodejs";
 
@@ -56,26 +55,8 @@ export async function POST(request: NextRequest) {
         `SELECT name, description FROM linktree_pages WHERE id = $1 LIMIT 1`,
         [pageId],
       );
-      const page = pageRes.rows[0];
-      const pageName = page?.name || `Page ${pageId}`;
-      const pageDescription = page?.description || undefined;
-      const pageUrl =
-        request.headers.get("referer") ||
-        request.nextUrl.searchParams.get("url") ||
-        new URL("/", request.url).toString();
-
-      await sendTiktokEvent({
-        eventName: "ViewContent",
-        eventId: `view_${pageId}_${fingerprint}`,
-        request,
-        url: pageUrl,
-        contentId: String(pageId),
-        contentType: "page",
-        contentName: pageName,
-        description: pageDescription,
-      });
     } catch (err) {
-      console.error("TikTok ViewContent send error:", err);
+      console.error("Database query error:", err);
     }
   }
 
