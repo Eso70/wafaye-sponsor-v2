@@ -180,7 +180,8 @@ export default async function PageBySlug({
                 >
                   <span className="flex items-center gap-3">
                     <span
-                      className="flex h-11 w-11 items-center justify-center rounded-full text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] sm:h-12 sm:w-12"
+                      className={`flex h-11 w-11 items-center justify-center rounded-full shadow-[0_6px_14px_rgba(0,0,0,0.2)] sm:h-12 sm:w-12 ${link.platformId === "snapchat" ? "text-slate-900" : "text-white"
+                        }`}
                       style={{ backgroundColor: link.color || "#64748b" }}
                     >
                       <Icon className="text-lg sm:text-xl" />
