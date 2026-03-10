@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
 import { db } from "@/database/db";
 import { getAppUrl } from "@/lib/app-url";
-import { computePageStatus, normalizeIraqPhone } from "@/lib/linktree";
+import { computePageStatus, normalizePhoneValue } from "@/lib/linktree";
 
 export const runtime = "nodejs";
 
@@ -83,7 +83,11 @@ export async function POST(request: Request) {
   const expiresAt = typeof b.expiresAt === "string" ? b.expiresAt : "";
   const showFooter = b.showFooter !== false;
   const sponsorName = typeof b.sponsorName === "string" ? b.sponsorName.trim() || "Wafaye Sponsor" : "Wafaye Sponsor";
-  const sponsorPhone = typeof b.sponsorPhone === "string" ? b.sponsorPhone.trim() || null : null;
+  let sponsorPhone: string | null = typeof b.sponsorPhone === "string" ? b.sponsorPhone.trim() || null : null;
+  if (sponsorPhone) {
+    const normalized = normalizePhoneValue(sponsorPhone);
+    if (normalized) sponsorPhone = normalized;
+  }
 
   const links = Array.isArray(b.links)
     ? (b.links as Array<{ platformId: string; value: string; label?: string; defaultMessage?: string }>)
@@ -143,8 +147,7 @@ export async function POST(request: Request) {
         continue;
       let value = link.value.trim();
       if (["whatsapp", "viber", "phone"].includes(link.platformId)) {
-        const normalized = normalizeIraqPhone(value);
-        if (normalized) value = normalized;
+        value = normalizePhoneValue(value) || value;
       }
       const label = typeof link.label === "string" ? link.label.trim() : null;
       const defaultMessage =

@@ -52,9 +52,11 @@ import {
   FaRegUserCircle,
 } from "react-icons/fa";
 import type { IconType } from "react-icons";
+import { CountrySelectModal } from "@/components/CountrySelectModal";
 import { DeleteModal } from "@/components/DeleteModal";
 import { ExpireDatePicker } from "@/components/ExpireDatePicker";
-import { formatIraqPhoneForInput } from "@/lib/phone";
+import { DEFAULT_COUNTRY_CODE } from "@/lib/country-codes";
+import { formatPhoneForInput, normalizePhone, normalizePhoneValue } from "@/lib/phone";
 
 type LinktreePage = {
   id: number;
@@ -91,11 +93,11 @@ const PLATFORM_CONFIG: Record<
   PlatformId,
   { label: string; type: "phone" | "username" | "url" | "custom"; placeholder: string; prefix?: string; color: string; icon: IconType }
 > = {
-  whatsapp: { label: "WhatsApp", type: "phone", placeholder: "07501234567 or 7501234567", color: "#25D366", icon: FaWhatsapp },
+  whatsapp: { label: "WhatsApp", type: "phone", placeholder: "7501234567", color: "#25D366", icon: FaWhatsapp },
   telegram: { label: "Telegram", type: "username", placeholder: "username", prefix: "https://t.me/", color: "#0088cc", icon: FaTelegram },
   tiktok: { label: "TikTok", type: "url", placeholder: "https://tiktok.com/@...", color: "#000000", icon: FaTiktok },
-  viber: { label: "Viber", type: "phone", placeholder: "07501234567 or 7501234567", color: "#7360F2", icon: FaViber },
-  phone: { label: "Phone Call", type: "phone", placeholder: "07501234567 or 7501234567", color: "#1F5CE0", icon: FaPhone },
+  viber: { label: "Viber", type: "phone", placeholder: "7501234567", color: "#7360F2", icon: FaViber },
+  phone: { label: "Phone Call", type: "phone", placeholder: "7501234567", color: "#1F5CE0", icon: FaPhone },
   facebook: { label: "Facebook", type: "url", placeholder: "https://facebook.com/...", color: "#1877F2", icon: FaSquareFacebook },
   snapchat: { label: "Snapchat", type: "url", placeholder: "https://snapchat.com/add/...", color: "#FFFC00", icon: FaSnapchatGhost },
   instagram: { label: "Instagram", type: "url", placeholder: "https://instagram.com/...", color: "#E4405F", icon: FaInstagram },
@@ -1520,11 +1522,12 @@ function CreateLinktreeModal({
     if (typeof window === "undefined") return "Wafaye Sponsor";
     return localStorage.getItem(DEFAULT_SPONSOR_KEY) || "Wafaye Sponsor";
   });
-  const [sponsorPhone, setSponsorPhone] = useState("+9647506553031");
+  const [sponsorPhone, setSponsorPhone] = useState("7506553031");
   const [hideFooter, setHideFooter] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformId[]>([]);
   const [platformInstances, setPlatformInstances] = useState<Array<{ id: number; platformId: PlatformId }>>([]);
   const [linkValues, setLinkValues] = useState<Record<string, string>>({});
+  const [linkCountryCodes, setLinkCountryCodes] = useState<Record<string, string>>({});
   const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
   const [defaultMessages, setDefaultMessages] = useState<Record<string, string>>({});
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -1533,7 +1536,7 @@ function CreateLinktreeModal({
 
   const DEFAULT_MESSAGE_PLATFORMS: PlatformId[] = ["whatsapp", "telegram", "viber"];
   const DEFAULT_PREFILL_MESSAGE = "سڵاو بەڕێز.";
-  const IRAQ_PHONE_PLATFORMS: PlatformId[] = ["whatsapp", "viber", "phone"];
+  const PHONE_PLATFORMS: PlatformId[] = ["whatsapp", "viber", "phone"];
   const nextInstanceIdRef = useRef(1);
 
   const inputClass = "w-full rounded-full border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-[#1b49d0] focus:ring-2 focus:ring-[#c8d6ff]";
@@ -1578,6 +1581,9 @@ function CreateLinktreeModal({
   function addPlatformInstance(platformId: PlatformId) {
     const newId = nextInstanceIdRef.current++;
     setPlatformInstances((prev) => [...prev, { id: newId, platformId }]);
+    if (PHONE_PLATFORMS.includes(platformId)) {
+      setLinkCountryCodes((prev) => ({ ...prev, [String(newId)]: DEFAULT_COUNTRY_CODE }));
+    }
     if (DEFAULT_MESSAGE_PLATFORMS.includes(platformId)) {
       setDefaultMessages((prev) => ({ ...prev, [String(newId)]: DEFAULT_PREFILL_MESSAGE }));
     }
@@ -1593,6 +1599,11 @@ function CreateLinktreeModal({
       return nextInstances;
     });
     setLinkValues((prev) => {
+      const next = { ...prev };
+      delete next[String(instanceId)];
+      return next;
+    });
+    setLinkCountryCodes((prev) => {
       const next = { ...prev };
       delete next[String(instanceId)];
       return next;
@@ -1670,13 +1681,16 @@ function CreateLinktreeModal({
       .map((inst, i) => {
         const val = linkValues[String(inst.id)]?.trim();
         if (!val) return null;
+        const value = PHONE_PLATFORMS.includes(inst.platformId)
+          ? normalizePhone(val, linkCountryCodes[String(inst.id)] || DEFAULT_COUNTRY_CODE)
+          : val;
         const label = inst.platformId === "custom" ? customLabels[String(inst.id)]?.trim() : undefined;
         const defaultMessage = DEFAULT_MESSAGE_PLATFORMS.includes(inst.platformId)
           ? defaultMessages[String(inst.id)]?.trim()
           : undefined;
         return {
           platformId: inst.platformId,
-          value: val,
+          value,
           label: label || undefined,
           defaultMessage: defaultMessage || undefined,
           sort_order: i,
@@ -1697,7 +1711,7 @@ function CreateLinktreeModal({
           expiresAt: expiresAtStr,
           showFooter: !hideFooter,
           sponsorName: sponsorName.trim() || "Wafaye Sponsor",
-          sponsorPhone: sponsorPhone.trim() || null,
+          sponsorPhone: sponsorPhone.trim() ? normalizePhoneValue(sponsorPhone.trim()) || null : null,
           links: links.map(({ platformId, value, label, defaultMessage }) => ({
             platformId,
             value,
@@ -1734,19 +1748,35 @@ function CreateLinktreeModal({
   useEffect(() => {
     setPlatformInstances((prev) => {
       const filtered = prev.filter((instance) => selectedPlatforms.includes(instance.platformId));
+      const removedIds = prev.filter((instance) => !selectedPlatforms.includes(instance.platformId)).map((i) => i.id);
+      if (removedIds.length > 0) {
+        setLinkValues((pv) => { const n = { ...pv }; removedIds.forEach((rid) => delete n[String(rid)]); return n; });
+        setLinkCountryCodes((pv) => { const n = { ...pv }; removedIds.forEach((rid) => delete n[String(rid)]); return n; });
+        setCustomLabels((pv) => { const n = { ...pv }; removedIds.forEach((rid) => delete n[String(rid)]); return n; });
+        setDefaultMessages((pv) => { const n = { ...pv }; removedIds.forEach((rid) => delete n[String(rid)]); return n; });
+      }
       const next = [...filtered];
       const toPrefill: Array<{ id: number; platformId: PlatformId }> = [];
+      const toSetCountry: Array<{ id: number }> = [];
       for (const id of selectedPlatforms) {
         if (!next.some((instance) => instance.platformId === id)) {
           const newId = nextInstanceIdRef.current++;
           next.push({ id: newId, platformId: id });
           if (DEFAULT_MESSAGE_PLATFORMS.includes(id)) toPrefill.push({ id: newId, platformId: id });
+          if (PHONE_PLATFORMS.includes(id)) toSetCountry.push({ id: newId });
         }
       }
       if (toPrefill.length > 0) {
         setDefaultMessages((prev) => {
           const n = { ...prev };
           for (const { id } of toPrefill) n[String(id)] = DEFAULT_PREFILL_MESSAGE;
+          return n;
+        });
+      }
+      if (toSetCountry.length > 0) {
+        setLinkCountryCodes((prev) => {
+          const n = { ...prev };
+          for (const { id } of toSetCountry) n[String(id)] = DEFAULT_COUNTRY_CODE;
           return n;
         });
       }
@@ -1910,7 +1940,7 @@ function CreateLinktreeModal({
                   </label>
                   <label className="block">
                     <span className="mb-1.5 block text-sm font-medium text-slate-700">Sponsor phone</span>
-                    <input type="tel" value={sponsorPhone} onChange={(e) => setSponsorPhone(e.target.value)} className={inputClass} placeholder="+964750123456" />
+                    <input type="tel" value={sponsorPhone} onChange={(e) => setSponsorPhone(e.target.value)} className={inputClass} placeholder="9647501234567 or 7501234567" />
                   </label>
                 </div>
               </div>
@@ -2081,20 +2111,37 @@ function CreateLinktreeModal({
                                     Prefix: <span className="font-medium text-slate-700">{cfg.prefix}</span>
                                   </p>
                                 ) : null}
-                                {IRAQ_PHONE_PLATFORMS.includes(id) ? (
-                                  <p className="text-[11px] text-slate-500">
-                                    +964 (Iraq) added automatically
-                                  </p>
-                                ) : null}
-                                <input
-                                  type={cfg.type === "phone" ? "tel" : cfg.type === "url" ? "url" : "text"}
-                                  value={value}
-                                  onChange={(e) =>
-                                    setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))
-                                  }
-                                  className={inputClass}
-                                  placeholder={cfg.placeholder}
-                                />
+                                {PHONE_PLATFORMS.includes(id) ? (
+                                  <div className="flex gap-2">
+                                    <CountrySelectModal
+                                      value={linkCountryCodes[String(instance.id)] ?? DEFAULT_COUNTRY_CODE}
+                                      onChange={(code) =>
+                                        setLinkCountryCodes((p) => ({ ...p, [String(instance.id)]: code }))
+                                      }
+                                      placeholder="+964"
+                                      compact
+                                    />
+                                    <input
+                                      type="tel"
+                                      value={value}
+                                      onChange={(e) =>
+                                        setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))
+                                      }
+                                      className={`${inputClass} min-w-0 flex-1`}
+                                      placeholder="7501234567"
+                                    />
+                                  </div>
+                                ) : (
+                                  <input
+                                    type={cfg.type === "url" ? "url" : "text"}
+                                    value={value}
+                                    onChange={(e) =>
+                                      setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))
+                                    }
+                                    className={inputClass}
+                                    placeholder={cfg.placeholder}
+                                  />
+                                )}
                                 {DEFAULT_MESSAGE_PLATFORMS.includes(id) ? (
                                   <div className="mt-2">
                                     <label className="mb-1 block text-[11px] font-medium text-slate-500">
@@ -2203,12 +2250,13 @@ function EditLinktreeModal({
     if (typeof window === "undefined") return "Wafaye Sponsor";
     return localStorage.getItem(DEFAULT_SPONSOR_KEY) || "Wafaye Sponsor";
   });
-  const [sponsorPhone, setSponsorPhone] = useState("+9647506553031");
+  const [sponsorPhone, setSponsorPhone] = useState("");
   const [hideFooter, setHideFooter] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformId[]>([]);
   const [platformInstances, setPlatformInstances] = useState<Array<{ id: number; platformId: PlatformId }>>([]);
   const [linkValues, setLinkValues] = useState<Record<string, string>>({});
-  const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
+  const [linkCountryCodes, setLinkCountryCodes] = useState<Record<string, string>>({});
+  const [linkLabels, setLinkLabels] = useState<Record<string, string>>({});
   const [defaultMessages, setDefaultMessages] = useState<Record<string, string>>({});
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadImageError, setUploadImageError] = useState<string | null>(null);
@@ -2217,7 +2265,7 @@ function EditLinktreeModal({
 
   const DEFAULT_MESSAGE_PLATFORMS: PlatformId[] = ["whatsapp", "telegram", "viber"];
   const DEFAULT_PREFILL_MESSAGE = "سڵاو بەڕێز.";
-  const IRAQ_PHONE_PLATFORMS: PlatformId[] = ["whatsapp", "viber", "phone"];
+  const PHONE_PLATFORMS: PlatformId[] = ["whatsapp", "viber", "phone"];
   const inputClass = "w-full rounded-full border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-[#1b49d0] focus:ring-2 focus:ring-[#c8d6ff]";
 
   useEffect(() => {
@@ -2245,8 +2293,10 @@ function EditLinktreeModal({
         const platforms = [...new Set(links.map((l) => l.platformId as PlatformId))];
         setSelectedPlatforms(platforms);
 
+        nextInstanceIdRef.current = 1;
         const instances: Array<{ id: number; platformId: PlatformId }> = [];
         const values: Record<string, string> = {};
+        const countryCodes: Record<string, string> = {};
         const labels: Record<string, string> = {};
         const msgs: Record<string, string> = {};
 
@@ -2254,10 +2304,14 @@ function EditLinktreeModal({
           const id = nextInstanceIdRef.current++;
           instances.push({ id, platformId: link.platformId as PlatformId });
           const raw = link.value || "";
-          values[String(id)] = IRAQ_PHONE_PLATFORMS.includes(link.platformId as PlatformId)
-            ? formatIraqPhoneForInput(raw)
-            : raw;
-          if (link.platformId === "custom" && link.label) labels[String(id)] = link.label;
+          if (PHONE_PLATFORMS.includes(link.platformId as PlatformId)) {
+            const parts = formatPhoneForInput(raw);
+            values[String(id)] = parts.localNumber;
+            countryCodes[String(id)] = parts.countryCode;
+          } else {
+            values[String(id)] = raw;
+          }
+          if (link.label) labels[String(id)] = link.label;
           if (DEFAULT_MESSAGE_PLATFORMS.includes(link.platformId as PlatformId) && link.defaultMessage) {
             msgs[String(id)] = link.defaultMessage;
           }
@@ -2265,7 +2319,8 @@ function EditLinktreeModal({
 
         setPlatformInstances(instances);
         setLinkValues(values);
-        setCustomLabels(labels);
+        setLinkCountryCodes(countryCodes);
+        setLinkLabels(labels);
         setDefaultMessages(msgs);
       } catch {
         if (!cancelled) setError("Failed to load page");
@@ -2274,12 +2329,15 @@ function EditLinktreeModal({
       }
     })();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- DEFAULT_MESSAGE_PLATFORMS, IRAQ_PHONE_PLATFORMS are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- DEFAULT_MESSAGE_PLATFORMS, PHONE_PLATFORMS are stable
   }, [page.id]);
 
   function addPlatformInstance(platformId: PlatformId) {
     const newId = nextInstanceIdRef.current++;
     setPlatformInstances((prev) => [...prev, { id: newId, platformId }]);
+    if (PHONE_PLATFORMS.includes(platformId)) {
+      setLinkCountryCodes((prev) => ({ ...prev, [String(newId)]: DEFAULT_COUNTRY_CODE }));
+    }
     if (DEFAULT_MESSAGE_PLATFORMS.includes(platformId)) {
       setDefaultMessages((prev) => ({ ...prev, [String(newId)]: DEFAULT_PREFILL_MESSAGE }));
     }
@@ -2295,7 +2353,8 @@ function EditLinktreeModal({
       return nextInstances;
     });
     setLinkValues((prev) => { const n = { ...prev }; delete n[String(instanceId)]; return n; });
-    setCustomLabels((prev) => { const n = { ...prev }; delete n[String(instanceId)]; return n; });
+    setLinkCountryCodes((prev) => { const n = { ...prev }; delete n[String(instanceId)]; return n; });
+    setLinkLabels((prev) => { const n = { ...prev }; delete n[String(instanceId)]; return n; });
     setDefaultMessages((prev) => { const n = { ...prev }; delete n[String(instanceId)]; return n; });
   }
 
@@ -2313,29 +2372,56 @@ function EditLinktreeModal({
   }
 
   function togglePlatform(id: PlatformId) {
-    setSelectedPlatforms((prev) => {
-      const next = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id];
-      setPlatformInstances((insts) => {
-        const filtered = insts.filter((i) => next.includes(i.platformId));
-        const result = [...filtered];
-        const toPrefill: Array<{ id: number; platformId: PlatformId }> = [];
-        for (const pid of next) {
-          if (!result.some((i) => i.platformId === pid)) {
-            const newId = nextInstanceIdRef.current++;
-            result.push({ id: newId, platformId: pid });
-            if (DEFAULT_MESSAGE_PLATFORMS.includes(pid)) toPrefill.push({ id: newId, platformId: pid });
-          }
-        }
-        if (toPrefill.length > 0) {
-          setDefaultMessages((p) => {
-            const n = { ...p };
-            for (const { id } of toPrefill) n[String(id)] = DEFAULT_PREFILL_MESSAGE;
-            return n;
-          });
-        }
-        return result;
+    const next = selectedPlatforms.includes(id) ? selectedPlatforms.filter((p) => p !== id) : [...selectedPlatforms, id];
+    const removedIds = platformInstances.filter((i) => !next.includes(i.platformId)).map((i) => i.id);
+
+    setSelectedPlatforms(next);
+
+    if (removedIds.length > 0) {
+      setLinkValues((pv) => {
+        const n = { ...pv };
+        removedIds.forEach((rid) => delete n[String(rid)]);
+        return n;
       });
-      return next;
+      setLinkCountryCodes((pv) => {
+        const n = { ...pv };
+        removedIds.forEach((rid) => delete n[String(rid)]);
+        return n;
+      });
+      setLinkLabels((pv) => {
+        const n = { ...pv };
+        removedIds.forEach((rid) => delete n[String(rid)]);
+        return n;
+      });
+      setDefaultMessages((pv) => {
+        const n = { ...pv };
+        removedIds.forEach((rid) => delete n[String(rid)]);
+        return n;
+      });
+    }
+
+    setPlatformInstances((insts) => {
+      const filtered = insts.filter((i) => next.includes(i.platformId));
+      const result = [...filtered];
+      const toPrefill: Array<{ id: number; platformId: PlatformId }> = [];
+      for (const pid of next) {
+        if (!result.some((i) => i.platformId === pid)) {
+          const newId = nextInstanceIdRef.current++;
+          result.push({ id: newId, platformId: pid });
+          if (PHONE_PLATFORMS.includes(pid)) {
+            setLinkCountryCodes((pv) => ({ ...pv, [String(newId)]: DEFAULT_COUNTRY_CODE }));
+          }
+          if (DEFAULT_MESSAGE_PLATFORMS.includes(pid)) toPrefill.push({ id: newId, platformId: pid });
+        }
+      }
+      if (toPrefill.length > 0) {
+        setDefaultMessages((p) => {
+          const n = { ...p };
+          for (const { id } of toPrefill) n[String(id)] = DEFAULT_PREFILL_MESSAGE;
+          return n;
+        });
+      }
+      return result;
     });
   }
 
@@ -2375,14 +2461,17 @@ function EditLinktreeModal({
       .map((inst, i) => {
         const val = linkValues[String(inst.id)]?.trim();
         if (!val) return null;
-        const label = inst.platformId === "custom" ? customLabels[String(inst.id)]?.trim() : undefined;
+        const value = PHONE_PLATFORMS.includes(inst.platformId)
+          ? normalizePhone(val, linkCountryCodes[String(inst.id)] || DEFAULT_COUNTRY_CODE)
+          : val;
+        const label = linkLabels[String(inst.id)]?.trim() || undefined;
         const defaultMessage = DEFAULT_MESSAGE_PLATFORMS.includes(inst.platformId)
           ? defaultMessages[String(inst.id)]?.trim()
           : undefined;
         return {
           platformId: inst.platformId,
-          value: val,
-          label: label || undefined,
+          value,
+          label,
           defaultMessage: defaultMessage || undefined,
           sort_order: i,
         };
@@ -2402,7 +2491,7 @@ function EditLinktreeModal({
           expiresAt: expiresAt || new Date().toISOString().slice(0, 10),
           showFooter: !hideFooter,
           sponsorName: sponsorName.trim() || "Wafaye Sponsor",
-          sponsorPhone: sponsorPhone.trim() || null,
+          sponsorPhone: sponsorPhone.trim() ? normalizePhoneValue(sponsorPhone.trim()) || null : null,
           links: links.map(({ platformId, value, label, defaultMessage }) => ({
             platformId,
             value,
@@ -2578,7 +2667,7 @@ function EditLinktreeModal({
                   </label>
                   <label className="block">
                     <span className="mb-1.5 block text-sm font-medium text-slate-700">Sponsor phone</span>
-                    <input type="tel" value={sponsorPhone} onChange={(e) => setSponsorPhone(e.target.value)} className={inputClass} placeholder="+964750123456" />
+                    <input type="tel" value={sponsorPhone} onChange={(e) => setSponsorPhone(e.target.value)} className={inputClass} placeholder="9647501234567 or 7501234567" />
                   </label>
                 </div>
               </div>
@@ -2664,30 +2753,66 @@ function EditLinktreeModal({
                                 <button type="button" onClick={() => removePlatformInstance(instance.id, id)} className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100">Remove</button>
                               </div>
                             </div>
-                            {isCustom ? (
-                              <div className="space-y-2">
-                                <input type="text" value={customLabels[String(instance.id)] ?? ""} onChange={(e) => setCustomLabels((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder="Link label" />
-                                <input type="url" value={value} onChange={(e) => setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder={cfg.placeholder} />
-                              </div>
-                            ) : (
-                              <div className="space-y-1.5">
-                                {cfg.prefix ? <p className="text-[11px] text-slate-500">Prefix: <span className="font-medium text-slate-700">{cfg.prefix}</span></p> : null}
-                                {IRAQ_PHONE_PLATFORMS.includes(id) ? <p className="text-[11px] text-slate-500">+964 (Iraq) added automatically</p> : null}
+                            <div className="space-y-2">
+                              <label className="block">
+                                <span className="mb-1 block text-[11px] font-medium text-slate-500">
+                                  Link label {!isCustom ? "(optional, overrides default)" : ""}
+                                </span>
                                 <input
-                                  type={cfg.type === "phone" ? "tel" : cfg.type === "url" ? "url" : "text"}
+                                  type="text"
+                                  value={linkLabels[String(instance.id)] ?? ""}
+                                  onChange={(e) => setLinkLabels((p) => ({ ...p, [String(instance.id)]: e.target.value }))}
+                                  className={inputClass}
+                                  placeholder={isCustom ? "e.g. My portfolio" : `Default: ${cfg.label}`}
+                                />
+                              </label>
+                              {isCustom ? (
+                                <input
+                                  type="url"
                                   value={value}
                                   onChange={(e) => setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))}
                                   className={inputClass}
                                   placeholder={cfg.placeholder}
                                 />
-                                {DEFAULT_MESSAGE_PLATFORMS.includes(id) ? (
-                                  <div className="mt-2">
-                                    <label className="mb-1 block text-[11px] font-medium text-slate-500">Default message (optional)</label>
-                                    <input type="text" value={defaultMessages[String(instance.id)] ?? ""} onChange={(e) => setDefaultMessages((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder="e.g. Hi! I'm interested in your sponsor services." />
-                                  </div>
-                                ) : null}
-                              </div>
-                            )}
+                              ) : (
+                                <div className="space-y-1.5">
+                                  {cfg.prefix ? <p className="text-[11px] text-slate-500">Prefix: <span className="font-medium text-slate-700">{cfg.prefix}</span></p> : null}
+                                  {PHONE_PLATFORMS.includes(id) ? (
+                                    <div className="flex gap-2">
+                                      <CountrySelectModal
+                                        value={linkCountryCodes[String(instance.id)] ?? DEFAULT_COUNTRY_CODE}
+                                        onChange={(code) =>
+                                          setLinkCountryCodes((p) => ({ ...p, [String(instance.id)]: code }))
+                                        }
+                                        placeholder="+964"
+                                        compact
+                                      />
+                                      <input
+                                        type="tel"
+                                        value={value}
+                                        onChange={(e) => setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))}
+                                        className={`${inputClass} min-w-0 flex-1`}
+                                        placeholder="7501234567"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type={cfg.type === "url" ? "url" : "text"}
+                                      value={value}
+                                      onChange={(e) => setLinkValues((p) => ({ ...p, [String(instance.id)]: e.target.value }))}
+                                      className={inputClass}
+                                      placeholder={cfg.placeholder}
+                                    />
+                                  )}
+                                  {DEFAULT_MESSAGE_PLATFORMS.includes(id) ? (
+                                    <div className="mt-2">
+                                      <label className="mb-1 block text-[11px] font-medium text-slate-500">Default message (optional)</label>
+                                      <input type="text" value={defaultMessages[String(instance.id)] ?? ""} onChange={(e) => setDefaultMessages((p) => ({ ...p, [String(instance.id)]: e.target.value }))} className={inputClass} placeholder="e.g. Hi! I'm interested in your sponsor services." />
+                                    </div>
+                                  ) : null}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         );
                       })}

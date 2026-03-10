@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
 import { db } from "@/database/db";
 import { getAppUrl } from "@/lib/app-url";
-import { computePageStatus, normalizeIraqPhone } from "@/lib/linktree";
+import { computePageStatus, normalizePhoneValue } from "@/lib/linktree";
 import { deleteUploadIfExists } from "@/lib/upload-utils";
 
 export const runtime = "nodejs";
@@ -115,7 +115,11 @@ export async function PATCH(
   const expiresAt = typeof b.expiresAt === "string" ? b.expiresAt : "";
   const showFooter = b.showFooter !== false;
   const sponsorName = typeof b.sponsorName === "string" ? b.sponsorName.trim() || "Wafaye Sponsor" : "Wafaye Sponsor";
-  const sponsorPhone = typeof b.sponsorPhone === "string" ? b.sponsorPhone.trim() || null : null;
+  let sponsorPhone: string | null = typeof b.sponsorPhone === "string" ? b.sponsorPhone.trim() || null : null;
+  if (sponsorPhone) {
+    const normalized = normalizePhoneValue(sponsorPhone);
+    if (normalized) sponsorPhone = normalized;
+  }
 
   const links = Array.isArray(b.links)
     ? (b.links as Array<{ platformId: string; value: string; label?: string; defaultMessage?: string }>)
@@ -170,8 +174,7 @@ export async function PATCH(
         continue;
       let value = link.value.trim();
       if (["whatsapp", "viber", "phone"].includes(link.platformId)) {
-        const normalized = normalizeIraqPhone(value);
-        if (normalized) value = normalized;
+        value = normalizePhoneValue(value) || value;
       }
       const label = typeof link.label === "string" ? link.label.trim() : null;
       const defaultMessage =
@@ -190,7 +193,7 @@ export async function PATCH(
     }
 
     const pageRes = await db.query(
-      `SELECT p.id, p.name, p.description, p.profile_image, p.slug, p.expires_at, p.is_official, p.updated_at,
+      `SELECT p.id, p.name, p.description, p.profile_image, p.slug, p.expires_at, p.is_official, p.show_footer, p.sponsor_name, p.sponsor_phone, p.updated_at,
         (SELECT COUNT(*) FROM page_views WHERE page_id = p.id) AS views,
         (SELECT COUNT(DISTINCT c.visitor_fingerprint) FROM link_clicks c
          JOIN linktree_links l ON c.link_id = l.id WHERE l.page_id = p.id) AS clicks
@@ -199,18 +202,22 @@ export async function PATCH(
     );
     const page = pageRes.rows[0];
     const baseUrl = getAppUrl();
+    const pageUrl = page.is_official ? baseUrl : `${baseUrl}/p/${page.slug}`;
 
     return NextResponse.json({
       id: page.id,
       name: page.name,
       description: page.description || "",
       profileImage: page.profile_image,
-      pageUrl: `${baseUrl}/p/${page.slug}`,
+      pageUrl,
       status: computePageStatus(page.expires_at.toISOString().slice(0, 10)),
       expiresAt: page.expires_at.toISOString().slice(0, 10),
       views: Number(page.views),
       clicks: Number(page.clicks),
       isOfficial: page.is_official,
+      showFooter: page.show_footer,
+      sponsorName: page.sponsor_name || "Wafaye Sponsor",
+      sponsorPhone: page.sponsor_phone,
       updatedAt: new Date(page.updated_at).toISOString().slice(0, 10),
     });
   } catch (err) {

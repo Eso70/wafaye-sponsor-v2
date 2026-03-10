@@ -10,25 +10,36 @@ const PLATFORM_PREFIX: Record<string, string> = {
 const PHONE_PLATFORMS = ["whatsapp", "viber", "phone"];
 
 /**
- * Normalize Iraqi phone input: 07501234567 or 7501234567 -> 9647501234567
- * Backend adds 964 (Iraq), user enters only local part.
- * Iraqi mobile numbers are 07XXXXXXXX (9 digits, must start with 7).
+ * Normalize phone to digits only. Value can be full international (9647501234567)
+ * or local with country code (7501234567 + Iraq). For backward compatibility,
+ * Iraqi local numbers (9 digits starting with 7) get 964 prepended if no country code.
+ * @deprecated Prefer normalizePhone from phone.ts with explicit countryCode
  */
 export function normalizeIraqPhone(value: string): string {
-  const digits = value.replace(/\D/g, "");
+  const digits = value.replace(/\D/g, "").replace(/^0+/, "");
   if (!digits) return "";
-  let rest = digits;
-  if (rest.startsWith("964")) rest = rest.slice(3);
-  else if (rest.startsWith("0")) rest = rest.slice(1);
-  if (rest.length === 9 && rest.startsWith("7")) return "964" + rest;
-  // 9 digits not starting with 7 (e.g. 509516125) - likely missing leading 7 from 7509516125
-  if (rest.length === 9 && !rest.startsWith("7")) rest = "7" + rest;
-  if (rest.length >= 9) {
-    let last9 = rest.slice(-9);
-    if (!last9.startsWith("7")) last9 = "7" + last9;
-    return "964" + last9;
-  }
-  return "964" + rest;
+  if (digits.startsWith("964") || digits.length > 10) return digits;
+  if (digits.length === 9 && digits.startsWith("7")) return "964" + digits;
+  if (digits.length === 9 && !digits.startsWith("7")) return "9647" + digits;
+  return "964" + digits;
+}
+
+/**
+ * Normalize phone to full international digits.
+ * - If value already looks like full international (10+ digits, or starts with known code), return digits.
+ * - Otherwise treat as local and prepend default country (964).
+ */
+export function normalizePhoneValue(
+  value: string,
+  _countryCode?: string | null
+): string {
+  const digits = value.replace(/\D/g, "").replace(/^0+/, "");
+  if (!digits) return "";
+  if (digits.startsWith("964") && digits.length >= 12) return digits;
+  if (digits.length >= 10 && !digits.startsWith("964")) return digits;
+  if (digits.length === 9 && digits.startsWith("7")) return "964" + digits;
+  if (digits.length === 9 && !digits.startsWith("7")) return "9647" + digits;
+  return "964" + digits;
 }
 
 /**
@@ -50,8 +61,7 @@ export function buildLinkHref(
   if (prefix) {
     let clean: string;
     if (PHONE_PLATFORMS.includes(platformId)) {
-      const normalized = normalizeIraqPhone(value) || value.replace(/\D/g, "");
-      const digits = normalized.startsWith("964") ? normalized : value.replace(/\D/g, "");
+      const digits = value.replace(/\D/g, "");
       clean = platformId === "whatsapp" ? digits : (digits ? `+${digits}` : value);
     } else {
       clean = value;
